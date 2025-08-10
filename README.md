@@ -24,8 +24,8 @@ O **Trenchat** é uma aplicação de chat em tempo real desenvolvida com **Sprin
 1. **Clonar o repositório**
    ```bash
    git clone https://github.com/LiamFer/Trenchat.git
-   cd TRENCHAT
-
+   cd Trenchat
+   ```
 
 2. **Compilar e executar a aplicação**
 
