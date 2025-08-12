@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Chat STOMP (rooms dinâmicas)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body {
+            font-family: Inter, system-ui, Arial;
+            margin: 20px;
+            background: #f6f7fb;
+            color: #111
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06)
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        input[type=text],
+        textarea {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #d6d9e6;
+            width: 100%
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background: #2563eb;
+            color: white
+        }
+
+        button.danger {
+            background: #ef4444
+        }
+
+        #messages {
+            height: 320px;
+            overflow: auto;
+            border: 1px solid #e6e9f2;
+            padding: 10px;
+            border-radius: 6px;
+            background: #fbfcff
+        }
+
+        .msg {
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            background: #eef2ff
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 6px
+        }
+
+        .status {
+            font-size: 13px;
+            padding: 6px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 10px
+        }
+
+        .connected {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #bbf7d0
+        }
+
+        .disconnected {
+            background: #fff7f7;
+            color: #7f1d1d;
+            border: 1px solid #fecaca
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Chat STOMP - Rooms dinâmicas</h2>
+        <p>Backend STOMP endpoint padrão: <code>/ws</code>. Ajuste se necessário.</p>
+
+        <div class="row">
+            <input id="serverUrl" type="text" value="http://localhost:3000/ws" />
+            <button id="btnConnect">Conectar</button>
+            <button id="btnDisconnect" class="danger" disabled>Desconectar</button>
+        </div>
+
+        <div class="row">
+            <input id="username" type="text" placeholder="Seu nome (ex: William)" value="William" />
+            <input id="roomId" type="text" placeholder="Room ID (UUID ou qualquer string)" />
+            <button id="btnCreateRoom">Gerar UUID</button>
+            <button id="btnJoinRoom" disabled>Entrar na room</button>
+            <button id="btnLeaveRoom" class="danger" disabled>Sair da room</button>
+        </div>
+
+        <div class="row">
+            <div id="connStatus" class="status disconnected">Desconectado</div>
+            <div style="flex:1"></div>
+            <div class="meta">Inscrito em: <span id="subscribedRoom">nenhuma</span></div>
+        </div>
+
+        <div id="messages"></div>
+
+        <div class="row" style="margin-top:10px">
+            <input id="msgInput" type="text" placeholder="Escreva sua mensagem..." />
+            <button id="btnSend" disabled>Enviar</button>
+        </div>
+    </div>
+
+    <!-- libs -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <script>
+        // util: gerar UUID v4 simples
+        function generateUUID() {
+            // implementação curta, suficiente para testes
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        let stompClient = null;
+        let currentSubscription = null;
+        let connected = false;
+
+        const btnConnect = document.getElementById('btnConnect');
+        const btnDisconnect = document.getElementById('btnDisconnect');
+        const serverUrlInput = document.getElementById('serverUrl');
+        const connStatus = document.getElementById('connStatus');
+
+        const btnCreateRoom = document.getElementById('btnCreateRoom');
+        const btnJoinRoom = document.getElementById('btnJoinRoom');
+        const btnLeaveRoom = document.getElementById('btnLeaveRoom');
+        const subscribedRoomSpan = document.getElementById('subscribedRoom');
+        const roomIdInput = document.getElementById('roomId');
+
+        const usernameInput = document.getElementById('username');
+        const msgInput = document.getElementById('msgInput');
+        const btnSend = document.getElementById('btnSend');
+        const messagesDiv = document.getElementById('messages');
+
+        function setStatus(isConnected) {
+            connected = isConnected;
+            if (isConnected) {
+                connStatus.textContent = 'Conectado';
+                connStatus.className = 'status connected';
+                btnConnect.disabled = true;
+                btnDisconnect.disabled = false;
+                btnJoinRoom.disabled = false;
+            } else {
+                connStatus.textContent = 'Desconectado';
+                connStatus.className = 'status disconnected';
+                btnConnect.disabled = false;
+                btnDisconnect.disabled = true;
+                btnJoinRoom.disabled = true;
+                btnLeaveRoom.disabled = true;
+                btnSend.disabled = true;
+                subscribedRoomSpan.textContent = 'nenhuma';
+            }
+        }
+
+        function addMessage(text, meta) {
+            const el = document.createElement('div');
+            el.className = 'msg';
+            if (meta) {
+                el.innerHTML = '<div class="meta">' + meta + '</div><div>' + escapeHtml(text) + '</div>';
+            } else {
+                el.textContent = text;
+            }
+            messagesDiv.appendChild(el);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        btnCreateRoom.addEventListener('click', () => {
+            roomIdInput.value = generateUUID();
+        });
+
+        btnConnect.addEventListener('click', () => {
+            const url = serverUrlInput.value.trim();
+            if (!url) { alert('Informe a URL do endpoint WebSocket (ex: http://localhost:8080/ws)'); return; }
+
+            // SockJS + STOMP
+            const socket = new SockJS(url);
+            stompClient = Stomp.over(socket);
+
+            // Opcional: desativar logs do stomp no console
+            stompClient.debug = () => { };
+
+            stompClient.connect({}, function (frame) {
+                setStatus(true);
+                addMessage('Conectado ao servidor: ' + (frame ? frame.headers['server'] || frame : 'ok'));
+            }, function (error) {
+                setStatus(false);
+                addMessage('Falha na conexão: ' + JSON.stringify(error));
+            });
+        });
+
+        btnDisconnect.addEventListener('click', () => {
+            if (stompClient) {
+                if (currentSubscription) {
+                    currentSubscription.unsubscribe();
+                    currentSubscription = null;
+                }
+                stompClient.disconnect(() => {
+                    setStatus(false);
+                    addMessage('Desconectado do servidor');
+                    stompClient = null;
+                }, {});
+            }
+        });
+
+        btnJoinRoom.addEventListener('click', () => {
+            if (!connected || !stompClient) { alert('Conecte-se primeiro'); return; }
+            const roomId = roomIdInput.value.trim();
+            if (!roomId) { alert('Informe/ gere um room id'); return; }
+
+            // Se já inscrito em outra sala, sai dela primeiro
+            if (currentSubscription) {
+                currentSubscription.unsubscribe();
+                currentSubscription = null;
+            }
+
+            const dest = '/topic/' + roomId;
+            currentSubscription = stompClient.subscribe(dest, function (message) {
+                // espera que o backend envie JSON
+                let payload = message.body;
+                try { payload = JSON.parse(message.body); }
+                catch (e) { /* deixa como string */ }
+
+                if (typeof payload === 'object') {
+                    if (payload.sender != usernameInput.value.trim()){
+                        addMessage(payload.content || JSON.stringify(payload), '[' + (payload.room || roomId) + '] ' + (payload.sender || 'server'));
+                    }
+                } else {
+                    addMessage(payload, '[room:' + roomId + ']');
+                }
+            });
+
+            subscribedRoomSpan.textContent = roomId;
+            btnLeaveRoom.disabled = false;
+            btnSend.disabled = false;
+            addMessage('Inscrito na room: ' + roomId);
+        });
+
+        btnLeaveRoom.addEventListener('click', () => {
+            if (currentSubscription) {
+                currentSubscription.unsubscribe();
+                addMessage('Saiu da room: ' + roomIdInput.value);
+                currentSubscription = null;
+                subscribedRoomSpan.textContent = 'nenhuma';
+                btnLeaveRoom.disabled = true;
+                btnSend.disabled = true;
+            }
+        });
+
+        btnSend.addEventListener('click', () => {
+            if (!connected || !stompClient) { alert('Conecte-se primeiro'); return; }
+            const roomId = roomIdInput.value.trim();
+            if (!roomId) { alert('Entre em uma room primeiro'); return; }
+            const username = usernameInput.value.trim() || 'Anon';
+            const content = msgInput.value.trim();
+            if (!content) return;
+
+            const payload = {
+                room: roomId,
+                sender: username,
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+
+            // envia para o controller: /app/sendToRoom (ajuste se o seu controller usar outro destino)
+            stompClient.send('/app/sendToRoom', {}, JSON.stringify(payload));
+            // opcional: mostrar localmente imediatamente
+            addMessage(payload.content, '[eu em ' + payload.room + '] ' + payload.sender);
+            msgInput.value = '';
+        });
+
+        // desliga automaticamente subscription se desconectar por timeout
+        window.addEventListener('beforeunload', function () {
+            if (stompClient && connected) {
+                try { stompClient.disconnect(); } catch (e) { }
+            }
+        });
+
+        // status inicial
+        setStatus(false);
+    </script>
+</body>
+
+</html>
