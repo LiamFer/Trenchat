@@ -1,9 +1,9 @@
-import RegisterForm from "../components/Forms/RegisterForm";
+import RegisterForm from "../Components/Forms/RegisterForm";
 import { useEffect, useState } from "react";
-import { useAppConfigs } from "../context/App";
+import { useAppConfigs } from "../Context/App";
 import { Content } from "antd/es/layout/layout";
 import { Layout, Segmented, Typography } from "antd";
-import LoginForm from "../components/Forms/LoginForm";
+import LoginForm from "../Components/Forms/LoginForm";
 const { Text } = Typography;
 
 export default function Login() {
@@ -12,8 +12,7 @@ export default function Login() {
 
   useEffect(() => {
     console.log(`DARKMODE is ${darkMode}`)
-    toggleTheme()
-  }, []);
+}, []);
 
   return (
     <Layout>
@@ -57,7 +56,7 @@ export default function Login() {
             />
             <h1 style={{ fontWeight: "bold", margin: "0px" }}>TRENCHAT</h1>
             <Text style={{ fontSize: "1.2rem" }} type="secondary">
-              We Recommend, you Watch.
+              Your Brand new Chatting App.
             </Text>
           </div>
           <div
@@ -86,7 +85,7 @@ export default function Login() {
           }}
         >
           <img
-            src="https://wallpapercave.com/wp/wp6058611.jpg"
+            src="https://i.pinimg.com/originals/ba/ac/73/baac73e96f568f7a3b3f8adc7324fc8b.gif"
             alt="Wallpaper"
             style={{
               width: "100%",

@@ -8,7 +8,7 @@ export const useAppConfigs = () => {
 };
 
 export const AppProvider = ({ children }: any) => {
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuActive, setMenuActive] = useState(false);
   const [userMenuActive, setUserMenuActive] = useState(false);
@@ -28,6 +28,7 @@ export const AppProvider = ({ children }: any) => {
 
   useEffect(() => {
     setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setDarkMode(false)
   }, []);
 
   return (

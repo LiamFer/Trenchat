@@ -1,6 +1,7 @@
 import { Form, Input, Button, Divider, App } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import GoogleButton from "../Buttons/GoogleButon/GoogleButton";
 
 export default function LoginForm() {
   const { notification } = App.useApp();
@@ -48,6 +49,7 @@ export default function LoginForm() {
         </Form.Item>
       </Form>
       <Divider>Or</Divider>
+      <GoogleButton></GoogleButton>
     </div>
   );
 }
