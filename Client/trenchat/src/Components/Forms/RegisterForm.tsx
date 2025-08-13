@@ -1,10 +1,39 @@
 import { Form, Input, Button, Divider, App } from "antd";
 import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
 import GoogleButton from "../Buttons/GoogleButon/GoogleButton";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../Redux/userSlice";
+import { login, register } from "../../Service/server.service";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterForm() {
   const [form] = Form.useForm();
   const { notification } = App.useApp();
+  const navigate = useNavigate()
+
+  const dispatch = useDispatch();
+  const onFinish = async (values: {
+    email: string;
+    password: string;
+    name: string;
+  }) => {
+    const { name, email, password } = values;
+    const response = await register(name, email, password);
+
+    if (response.success) {
+      const loginResponse = await login(email, password);
+      if (loginResponse.success) {
+        dispatch(setUser(loginResponse.data));
+        navigate("/")
+      }
+    } else {
+      notification.error({
+        message: "Error",
+        description: response.error,
+        placement: "topRight",
+      });
+    }
+  };
 
   return (
     <div>
@@ -14,6 +43,7 @@ export default function RegisterForm() {
         layout="vertical"
         autoComplete="off"
         variant="filled"
+        onFinish={onFinish}
       >
         <Form.Item
           name="name"

@@ -1,0 +1,44 @@
+import axios from "axios";
+import { serverApi } from "../API/server";
+
+export async function register(name: string, email: string, password: string) {
+  try {
+    const response = await serverApi.post(`/auth/register`, {
+      name,
+      email,
+      password,
+    });
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || "Unknown Error";
+      return { success: false, error: message };
+    }
+    return { success: false, error: "Unexpected Error." };
+  }
+}
+
+export async function login(email: string, password: string) {
+  try {
+    const response = await serverApi.post(`/auth/login`, { email, password });
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || "Unknown Error";
+
+      if (status === 401) {
+        return { success: false, error: "Invalid Credentials." };
+      } else if (status === 400) {
+        return { success: false, error: message };
+      } else {
+        return {
+          success: false,
+          error: "Error while connecting to the Server.",
+        };
+      }
+    }
+
+    return { success: false, error: "Unexpected Error." };
+  }
+}

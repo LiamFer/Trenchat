@@ -2,11 +2,36 @@ import { Form, Input, Button, Divider, App } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import GoogleButton from "../Buttons/GoogleButon/GoogleButton";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../Redux/userSlice";
+import { login } from "../../Service/server.service";
 
 export default function LoginForm() {
   const { notification } = App.useApp();
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const onFinish = async (values: { email: string; password: string }) => {
+    const response = await login(values.email, values.password);
+    if (response.success) {
+      console.log(response.data)
+      dispatch(setUser(response.data));
+      navigate("/");
+      notification.success({
+        message: "Logged In",
+        description: `Welcome to Trenchat ${response.data.name}!`,
+        placement: "topRight",
+      });
+    } else {
+      notification.error({
+        message: "Error",
+        description: "Invalid Credentials!",
+        placement: "topRight",
+      });
+    }
+  };
+
 
   return (
     <div>
@@ -14,7 +39,7 @@ export default function LoginForm() {
         form={form}
         name="register"
         layout="vertical"
-        onFinish={()=>{}}
+        onFinish={onFinish}
         autoComplete="off"
         variant="filled"
       >

@@ -2,6 +2,7 @@ package com.liamfer.Trenchat.service;
 
 import com.liamfer.Trenchat.dto.user.CreateUserDTO;
 import com.liamfer.Trenchat.dto.user.LoginUserDTO;
+import com.liamfer.Trenchat.dto.user.UserLoginResponseDTO;
 import com.liamfer.Trenchat.entity.UserEntity;
 import com.liamfer.Trenchat.enums.UserRole;
 import com.liamfer.Trenchat.repository.UserRepository;
@@ -39,10 +40,12 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public String login(LoginUserDTO loginUserDTO){
+    public UserLoginResponseDTO login(LoginUserDTO loginUserDTO){
         var credentials = new UsernamePasswordAuthenticationToken(loginUserDTO.email(),loginUserDTO.password());
         authenticationManager.authenticate(credentials);
-        return jwtService.generateToken(loginUserDTO.email());
+        String token = jwtService.generateToken(loginUserDTO.email());
+        UserEntity user = userRepository.findByEmail(loginUserDTO.email()).get();
+        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail(),token);
     }
 
     private void checkIfEmailIsAvailable(String email){

@@ -4,6 +4,7 @@ import com.liamfer.Trenchat.dto.api.APIMessage;
 import com.liamfer.Trenchat.dto.user.CreateUserDTO;
 import com.liamfer.Trenchat.dto.user.GeneratedTokenResponse;
 import com.liamfer.Trenchat.dto.user.LoginUserDTO;
+import com.liamfer.Trenchat.dto.user.UserLoginResponseDTO;
 import com.liamfer.Trenchat.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,8 +29,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<GeneratedTokenResponse> login (@RequestBody @Valid LoginUserDTO loginUserDTO){
-        String token = authService.login(loginUserDTO);
-        return ResponseEntity.ok(new GeneratedTokenResponse(token));
+    public ResponseEntity<UserLoginResponseDTO> login (@RequestBody @Valid LoginUserDTO loginUserDTO){
+        return ResponseEntity.ok(authService.login(loginUserDTO));
     }
 }
