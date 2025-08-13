@@ -14,8 +14,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry config) {
         // Para onde o servidor vai enviar mensagens
         config.enableSimpleBroker("/topic");
-
-        // Prefixo usado para o cliente enviar mensagens para o servidor
         config.setApplicationDestinationPrefixes("/app");
     }
 
@@ -23,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Endpoint WebSocket (com fallback SockJS)
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://172.30.62.129:5500") .withSockJS();
+                .setAllowedOrigins("http://127.0.0.1:5500","http://192.168.101.69:5500") .withSockJS();
     }
 }
 
