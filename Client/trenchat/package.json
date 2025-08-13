@@ -10,9 +10,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@reduxjs/toolkit": "^2.8.2",
     "antd": "^5.27.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "antd-img-crop": "^4.25.0",
+    "axios": "^1.11.0",
+    "lodash": "^4.17.21",
+    "lodash.debounce": "^4.0.8",
+    "motion": "^12.23.12",
+    "react": "^18.3.1",
+    "react-countup": "^6.5.3",
+    "react-dom": "^18.3.1",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.8.0",
+    "react-type-animation": "^3.2.0",
+    "swiper": "^11.2.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
