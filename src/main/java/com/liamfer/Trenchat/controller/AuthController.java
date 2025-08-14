@@ -7,7 +7,9 @@ import com.liamfer.Trenchat.dto.user.LoginUserDTO;
 import com.liamfer.Trenchat.dto.user.UserLoginResponseDTO;
 import com.liamfer.Trenchat.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +32,17 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<UserLoginResponseDTO> login (@RequestBody @Valid LoginUserDTO loginUserDTO){
-        return ResponseEntity.ok(authService.login(loginUserDTO));
+        UserLoginResponseDTO userResponse = authService.login(loginUserDTO);
+        String token = authService.generateToken(loginUserDTO);
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt-token", token)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .sameSite("Strict")
+                .maxAge(24 * 60 * 60) // 1 dia
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(userResponse);
     }
 }

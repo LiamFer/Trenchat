@@ -5,7 +5,6 @@ interface UserData {
   name: string;
   email: string;
   picture?: string;
-  token: string;
 }
 
 interface UserState {
@@ -23,11 +22,6 @@ const userSlice = createSlice({
     setUser(state, action) {
       state.user = action.payload;
     },
-    updateToken(state, action: PayloadAction<string>) {
-      if (state.user) {
-        state.user.token = action.payload;
-      }
-    },
     clearUser(state) {
       state.user = null;
     },
@@ -39,5 +33,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUser, clearUser, updateToken,updateUserPicture } = userSlice.actions;
+export const { setUser, clearUser,updateUserPicture } = userSlice.actions;
 export default userSlice.reducer;

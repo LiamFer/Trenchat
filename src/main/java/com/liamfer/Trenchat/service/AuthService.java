@@ -43,9 +43,14 @@ public class AuthService {
     public UserLoginResponseDTO login(LoginUserDTO loginUserDTO){
         var credentials = new UsernamePasswordAuthenticationToken(loginUserDTO.email(),loginUserDTO.password());
         authenticationManager.authenticate(credentials);
-        String token = jwtService.generateToken(loginUserDTO.email());
         UserEntity user = userRepository.findByEmail(loginUserDTO.email()).get();
-        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail(),token);
+        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail());
+    }
+
+    public String generateToken(LoginUserDTO loginUserDTO){
+        var credentials = new UsernamePasswordAuthenticationToken(loginUserDTO.email(),loginUserDTO.password());
+        authenticationManager.authenticate(credentials);
+        return jwtService.generateToken(loginUserDTO.email());
     }
 
     private void checkIfEmailIsAvailable(String email){

@@ -6,14 +6,14 @@ export const serverApi = axios.create({
     withCredentials: true,
 });
 
-serverApi.interceptors.request.use(
-    (config) => {
-        const state = store.getState();
-        const token = state.user.user?.token;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+// serverApi.interceptors.request.use(
+//     (config) => {
+//         const state = store.getState();
+//         const token = state.user.user?.token;
+//         if (token) {
+//             config.headers.Authorization = `Bearer ${token}`;
+//         }
+//         return config;
+//     },
+//     (error) => Promise.reject(error)
+// );

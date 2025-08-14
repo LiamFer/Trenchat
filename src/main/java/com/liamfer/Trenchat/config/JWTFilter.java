@@ -4,6 +4,7 @@ import com.liamfer.Trenchat.repository.UserRepository;
 import com.liamfer.Trenchat.service.JWTService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.io.IOException;
 public class JWTFilter extends OncePerRequestFilter {
     private final JWTService jwtService;
     private final UserRepository userRepository;
+
     public JWTFilter(JWTService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
@@ -29,20 +31,32 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String headers = request.getHeader("Authorization");
-        try{
-            if(headers != null){
-                String token = headers.replace("Bearer ","");
+        String token = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt-token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        try {
+            if (token != null) {
                 String subject = jwtService.validateToken(token);
-                UserDetails user = userRepository.findByEmail(subject).get();
-                var auth = new UsernamePasswordAuthenticationToken(user,null,user.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                UserDetails user = userRepository.findByEmail(subject).orElse(null);
+                if (user != null) {
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            user, null, user.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
         } catch (Exception e) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
             response.getWriter().write("{\"code\":401,\"message\":\"Token Expired/Invalid\"}");
             return;
         }
-        filterChain.doFilter(request,response);
+
+        filterChain.doFilter(request, response);
     }
 }
