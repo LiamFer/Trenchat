@@ -10,11 +10,11 @@ export default function AppWireframe() {
 
     return (
         <Layout
-            style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+            style={{ minHeight: "100vh", display: "flex", flexDirection: "column"}}
         >
 
             <Content
-                style={{ flexGrow: 1, padding: "0 20px" }}
+                style={{ flexGrow: 1, padding: "0px" }}
             >
                 <Outlet></Outlet>
             </Content>
