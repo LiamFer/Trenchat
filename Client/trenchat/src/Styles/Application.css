@@ -1,10 +1,4 @@
-/* Garante que o html, body e a raiz do React ocupem a altura total da tela */
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden; /* Evita o scroll da página principal */
-}
+
 
 /* O layout principal ocupa a altura total do viewport */
 .app-layout {

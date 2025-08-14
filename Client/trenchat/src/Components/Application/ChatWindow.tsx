@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Avatar } from 'antd';
+import { Input, Avatar, theme } from 'antd';
 import '../../Styles/ChatWindow.css';
 
 interface Message {
@@ -23,6 +23,8 @@ const messages: Message[] = [
 ];
 
 const ChatWindow: React.FC = () => {
+    // Acessa os tokens do tema do Ant Design
+    const { token } = theme.useToken();
     const [inputValue, setInputValue] = useState<string>('');
 
     const onSearch = (value: string) => {
@@ -32,34 +34,37 @@ const ChatWindow: React.FC = () => {
     };
 
     return (
-        <div className="chat-window-container">
-            <div className="chat-header">
+        <div className="chat-window-container" style={{ backgroundColor: token.colorBgLayout }}>
+            <div className="chat-header" style={{ backgroundColor: token.colorBgContainer, borderBottom: `1px solid ${token.colorBorder}` }}>
                 <Avatar src="https://i.pravatar.cc/150?img=1" size={48} />
                 <div className="chat-header-info">
-                    <div className="chat-header-name">Henry Boyd</div>
-                    <div className="chat-header-status">Active</div>
+                    <div className="chat-header-name" style={{ color: token.colorTextHeading }}>Henry Boyd</div>
+                    <div className="chat-header-status" style={{ color: token.colorPrimary }}>Active</div>
                 </div>
             </div>
-            <div className="messages-list">
+            <div className="messages-list" style={{ backgroundColor: token.colorBgContainer }}>
                 {messages.map((message, index) => (
                     <div key={index} className={`message-row ${message.type}`}>
                         {message.type === 'received' && <Avatar src="https://i.pravatar.cc/150?img=1" className="message-avatar" />}
-                        <div className={`message-bubble ${message.type}`}>
+                        <div className={`message-bubble ${message.type}`} style={{
+                            backgroundColor: message.type === 'sent' ? token.colorPrimary : token.colorFillQuaternary,
+                            color: message.type === 'sent' ? '#fff' : token.colorText,
+                        }}>
                             <p>{message.text}</p>
-                            <span className="message-time">{message.time}</span>
+                            <span className="message-time" style={{ color: token.colorTextSecondary }}>{message.time}</span>
                         </div>
                         {message.type === 'sent' && <Avatar src="https://i.pravatar.cc/150?img=11" className="message-avatar" />}
                     </div>
                 ))}
             </div>
-            <div className="chat-input-area">
+            <div className="chat-input-area" style={{ backgroundColor: token.colorBgContainer, borderTop: `1px solid ${token.colorBorder}` }}>
                 <Input
                     placeholder="Enter your message here"
                     value={inputValue}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
                     onPressEnter={() => onSearch(inputValue)}
                 />
-                <span className="send-button" onClick={() => onSearch(inputValue)}>Send</span>
+                <span className="send-button" onClick={() => onSearch(inputValue)} style={{ color: token.colorPrimary }}>Send</span>
             </div>
         </div>
     );
