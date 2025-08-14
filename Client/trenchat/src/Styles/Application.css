@@ -1,0 +1,49 @@
+/* Garante que o html, body e a raiz do React ocupem a altura total da tela */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Evita o scroll da página principal */
+}
+
+/* O layout principal ocupa a altura total do viewport */
+.app-layout {
+  height: 100vh;
+  display: flex;
+  overflow: hidden; /* Evita que o layout principal cause scroll */
+}
+
+/* Garante que a linha principal ocupe 100% da altura disponível */
+.main-row {
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+/* Configura as colunas para ocuparem 100% da altura e usarem flexbox */
+.sidebar-col, .chat-window-col, .right-sidebar-col {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* O conteúdo do chat deve ocupar o restante do espaço disponível na coluna */
+.chat-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Garante que o Content ocupe 100% da altura da coluna */
+}
+
+/* O componente ChatWindow precisa ser ajustado internamente para ter uma área de mensagens com scroll */
+/* Exemplo de estilo para o ChatWindow (dentro de ChatWindow.css) */
+.chat-window-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.messages-list {
+  flex-grow: 1; /* Faz a lista de mensagens ocupar o espaço restante */
+  overflow-y: auto; /* Adiciona scroll apenas na lista de mensagens */
+}
