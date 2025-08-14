@@ -4,6 +4,7 @@ import { useAppConfigs } from "../Context/App";
 import { Content } from "antd/es/layout/layout";
 import { Layout, Segmented, Typography } from "antd";
 import LoginForm from "../Components/Forms/LoginForm";
+import { ThunderboltOutlined } from "@ant-design/icons";
 const { Text } = Typography;
 
 export default function Login() {
@@ -49,11 +50,7 @@ export default function Login() {
               alignItems: "center",
             }}
           >
-            <img
-              width={60}
-              src={"./darkModeLogo.svg"}
-              alt=""
-            />
+            <ThunderboltOutlined style={{ fontSize: "70px", color:"#1890ff"}}/>
             <h1 style={{ fontWeight: "bold", margin: "0px" }}>TRENCHAT</h1>
             <Text style={{ fontSize: "1.2rem" }} type="secondary">
               Your Brand new Chatting App.
