@@ -73,7 +73,7 @@ const ChatWindow: React.FC = () => {
     }, [messages]);
 
     const onSearch = (value: string) => {
-        if (!stompClient.current || !user) return;
+        if (!stompClient.current || !user || value.length == 0) return;
 
         const payload = {
             room: "test",
