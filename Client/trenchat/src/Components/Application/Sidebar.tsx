@@ -8,10 +8,6 @@ const { Meta } = Card;
 const activeConversations = [
     { name: 'Henry Boyd', avatar: 'https://i.pravatar.cc/150?img=1' },
     { name: 'Martha Curtis', avatar: 'https://i.pravatar.cc/150?img=2', unread: 2 },
-    { name: 'Philip Tucker', avatar: 'https://i.pravatar.cc/150?img=3' },
-    { name: 'Christine Reid', avatar: 'https://i.pravatar.cc/150?img=4' },
-    { name: 'Jorry Guzman', avatar: 'https://i.pravatar.cc/150?img=5' },
-    { name: 'Russell Williams', avatar: 'https://i.pravatar.cc/150?img=6' },
 ];
 
 const archivedConversations = [

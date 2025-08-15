@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Input, Avatar, theme } from 'antd';
 import '../../Styles/ChatWindow.css';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import useUser from '../../Hooks/useUser';
 
 interface Message {
     type: 'sent' | 'received';
@@ -23,13 +26,68 @@ const messages: Message[] = [
 ];
 
 const ChatWindow: React.FC = () => {
-    // Acessa os tokens do tema do Ant Design
     const { token } = theme.useToken();
+    const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState<string>('');
+    const stompClient = useRef<Client | null>(null);
+    const user = useUser()
+
+    useEffect(() => {
+        const socket = new SockJS('http://192.168.101.69:3000/ws');
+        const client = new Client({
+            webSocketFactory: () => socket,
+            reconnectDelay: 5000,
+        });
+
+        client.onConnect = () => {
+            client.subscribe('/topic/test', (msg) => {
+                const data = JSON.parse(msg.body);
+
+                const newMsg: Message = {
+                    type: data.sender === user?.name ? 'sent' : 'received',
+                    text: data.content,
+                    user: data.sender,
+                    time: new Date().toLocaleTimeString(),
+                };
+                if (data.sender != user?.name){
+                    setMessages(prev => [...prev, newMsg]);
+                }
+            });
+        };
+
+        client.activate();
+        stompClient.current = client;
+
+        return () => {
+            client.deactivate();
+        };
+    }, [user]);
 
     const onSearch = (value: string) => {
-        // Lógica para enviar a mensagem
-        console.log(value);
+        if (!stompClient.current || !user) return;
+
+        const payload = {
+            room: "test",
+            sender: user.name,  // usuário atual
+            content: value,
+            timestamp: new Date().toISOString()
+        };
+
+        // Envia para o backen
+        stompClient.current.publish({
+            destination: '/app/sendToRoom',
+            body: JSON.stringify(payload)
+        });
+
+        // Adiciona localmente na lista
+        const sentMessage: Message = {
+            type: 'sent',
+            text: value,
+            user: user.name,
+            time: new Date().toLocaleTimeString(),
+        };
+
+        setMessages(prev => [...prev, sentMessage]);
         setInputValue('');
     };
 

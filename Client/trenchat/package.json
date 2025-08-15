@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
     "@reduxjs/toolkit": "^2.8.2",
+    "@stomp/stompjs": "^7.1.1",
     "antd": "^5.27.0",
     "antd-img-crop": "^4.25.0",
     "axios": "^1.11.0",
@@ -24,12 +25,14 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.8.0",
     "react-type-animation": "^3.2.0",
+    "sockjs-client": "^1.6.1",
     "swiper": "^11.2.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
+    "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
