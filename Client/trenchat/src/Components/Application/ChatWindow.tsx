@@ -30,7 +30,12 @@ const ChatWindow: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState<string>('');
     const stompClient = useRef<Client | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const user = useUser()
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     useEffect(() => {
         const socket = new SockJS('http://192.168.101.69:3000/ws');
@@ -62,6 +67,10 @@ const ChatWindow: React.FC = () => {
             client.deactivate();
         };
     }, [user]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const onSearch = (value: string) => {
         if (!stompClient.current || !user) return;
@@ -114,6 +123,7 @@ const ChatWindow: React.FC = () => {
                         {message.type === 'sent' && <Avatar src="https://i.pravatar.cc/150?img=11" className="message-avatar" />}
                     </div>
                 ))}
+                <div ref={messagesEndRef} />
             </div>
             <div className="chat-input-area" style={{ backgroundColor: token.colorBgContainer, borderTop: `1px solid ${token.colorBorder}` }}>
                 <Input
