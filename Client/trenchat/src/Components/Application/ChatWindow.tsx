@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Input, Avatar, theme } from "antd";
 import "../../Styles/ChatWindow.css";
-import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
-const wsUrl = import.meta.env.VITE_WS_URL;
 
 interface Message {
   type: "sent" | "received";
@@ -138,7 +136,7 @@ const ChatWindow: React.FC = () => {
             </div>
             {message.type === "sent" && (
               <Avatar
-                src="https://i.pravatar.cc/150?img=11"
+                src={user?.picture || "https://i.pinimg.com/474x/07/c4/72/07c4720d19a9e9edad9d0e939eca304a.jpg?nii=t"}
                 className="message-avatar"
               />
             )}

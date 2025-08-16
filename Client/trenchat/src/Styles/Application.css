@@ -1,43 +1,30 @@
-
-
-/* O layout principal ocupa a altura total do viewport */
 .app-layout {
+  display: flex;
   height: 100vh;
-  display: flex;
-  overflow: hidden; /* Evita que o layout principal cause scroll */
+  overflow: hidden;
 }
 
-/* Garante que a linha principal ocupe 100% da altura disponível */
-.main-row {
-  height: 100%;
-  width: 100%;
-  display: flex;
+/* Sidebar */
+.app-layout > .sidebar {
+  width: 260px; /* largura normal */
+  transition: width 0.3s;
 }
 
-/* Configura as colunas para ocuparem 100% da altura e usarem flexbox */
-.sidebar-col, .chat-window-col, .right-sidebar-col {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+.app-layout > .sidebar.collapsed {
+  width: 80px; /* largura colapsada */
 }
 
-/* O conteúdo do chat deve ocupar o restante do espaço disponível na coluna */
-.chat-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Garante que o Content ocupe 100% da altura da coluna */
-}
-
-/* O componente ChatWindow precisa ser ajustado internamente para ter uma área de mensagens com scroll */
-/* Exemplo de estilo para o ChatWindow (dentro de ChatWindow.css) */
+/* Chat ocupa o espaço restante */
 .chat-window-container {
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.messages-list {
-  flex-grow: 1; /* Faz a lista de mensagens ocupar o espaço restante */
-  overflow-y: auto; /* Adiciona scroll apenas na lista de mensagens */
+/* RightSidebar fixo */
+.app-layout > .right-sidebar {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
 }

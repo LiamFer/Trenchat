@@ -1,41 +1,53 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import useUser from "../Hooks/useUser";
 import { useNavigate } from "react-router-dom";
-import { Layout, Row, Col } from 'antd';
-import Sidebar from '../Components/Application/Sidebar';
-import ChatWindow from '../Components/Application/ChatWindow';
-import RightSidebar from '../Components/Application/RightSidebar';
-import '../Styles/Application.css';
+import { Layout, App } from "antd";
+import Sidebar from "../Components/Application/Sidebar";
+import ChatWindow from "../Components/Application/ChatWindow";
+import RightSidebar from "../Components/Application/RightSidebar";
+import "../Styles/Application.css";
+import { Client } from "@stomp/stompjs";
+import { createStompClient } from "../API/socket";
 
 const { Content } = Layout;
 
 export default function Application() {
-    const user = useUser();
-    const navigate = useNavigate()
+  const { notification } = App.useApp();
+  const stompClient = useRef<Client | null>(null);
+  const user = useUser();
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
 
-    useEffect(() => {
-        if (!user) {
-            navigate("/login");
-        } else {
-            navigate("/")
-        }
-    }, [user]);
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    } else {
+      navigate("/");
+      stompClient.current = createStompClient(user.id, (msg) => {
+        notification.warning({
+          message: "New Message Received",
+          description: `You received a new Message!`,
+          placement: "topRight",
+          pauseOnHover: true,
+        });
+      });
+    }
+    return () => {
+      if (stompClient.current) {
+        stompClient.current.deactivate();
+      }
+    };
+  }, [user]);
 
-    return (
-        <Layout className="app-layout">
-            <Row className="main-row">
-                <Col span={5} className="sidebar-col">
-                    <Sidebar />
-                </Col>
-                <Col span={14} className="chat-window-col">
-                    <Content className="chat-content">
-                        <ChatWindow />
-                    </Content>
-                </Col>
-                <Col span={5} className="right-sidebar-col">
-                    <RightSidebar />
-                </Col>
-            </Row>
-        </Layout>
-    );
-};
+  return (
+    <Layout className="app-layout">
+      <Sidebar/>
+
+      <Content className="chat-window-container">
+        <ChatWindow />
+      </Content>
+
+      <RightSidebar />
+    </Layout>
+  );
+}
