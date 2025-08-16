@@ -14,8 +14,13 @@ public class ChatController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @MessageMapping("/sendToRoom")
+    @MessageMapping("/chatroom")
     public void sendToRoom(ChatMessage message) {
+        messagingTemplate.convertAndSend("/topic/" + message.room(), message);
+    }
+
+    @MessageMapping("/notifications")
+    public void sendNotification(ChatMessage message) {
         messagingTemplate.convertAndSend("/topic/" + message.room(), message);
     }
 }

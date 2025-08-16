@@ -1,6 +1,5 @@
 import RegisterForm from "../Components/Forms/RegisterForm";
-import { useEffect, useState } from "react";
-import { useAppConfigs } from "../Context/App";
+import { useState } from "react";
 import { Content } from "antd/es/layout/layout";
 import { Layout, Segmented, Typography } from "antd";
 import LoginForm from "../Components/Forms/LoginForm";
@@ -8,12 +7,7 @@ import { ThunderboltOutlined } from "@ant-design/icons";
 const { Text } = Typography;
 
 export default function Login() {
-  const { toggleTheme, darkMode } = useAppConfigs();
   const [mode, setMode] = useState("Login");
-
-  useEffect(() => {
-    console.log(`DARKMODE is ${darkMode}`)
-}, []);
 
   return (
     <Layout>

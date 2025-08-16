@@ -15,11 +15,10 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-//        config.setAllowedOrigins(List.of("http://192.168.101.69:5173")); // só essa origem
         config.addAllowedOriginPattern("*");
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS")); // métodos permitidos
-        config.setAllowedHeaders(List.of("*","http://192.168.101.69:5173")); // qualquer header
-        config.setAllowCredentials(true); // permite enviar cookies
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedHeaders(List.of("*","http://192.168.101.69:5173","http://192.168.15.27:5173"));
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
