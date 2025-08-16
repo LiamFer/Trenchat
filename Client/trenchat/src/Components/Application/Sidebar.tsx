@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Layout, Card, Avatar, Divider, Button, theme } from "antd";
-import { ThunderboltOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  ThunderboltOutlined,
+  SearchOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import "../../Styles/Sidebar.css";
 import useUser from "../../Hooks/useUser";
 
@@ -84,6 +88,7 @@ const Sidebar = () => {
         <Card
           bordered={false}
           style={{
+            position: "relative", // necessário para posicionar o botão
             background: "transparent",
             textAlign: "center",
             display: "flex",
@@ -122,6 +127,21 @@ const Sidebar = () => {
               </div>
             </>
           )}
+
+          {!collapsed && (
+            <Button
+              type="text"
+              icon={<SettingOutlined />}
+              style={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                padding: 0,
+                fontSize: token.fontSizeLG,
+                color: token.colorTextSecondary,
+              }}
+            />
+          )}
         </Card>
 
         <Divider style={{ borderColor: token.colorBorder }} />
@@ -157,12 +177,13 @@ const Sidebar = () => {
               display: "flex",
               flexDirection: "column",
               gap: token.marginSM,
-              scrollbarWidth: "none", // Firefox
+              scrollbarWidth: "none",
             }}
           >
             {activeConversations.map((item, index) => (
               <div
                 key={index}
+                className="conversation-item"
                 style={{
                   position: "relative",
                   display: "flex",
@@ -170,8 +191,14 @@ const Sidebar = () => {
                   alignItems: "center",
                   justifyContent: collapsed ? "center" : "flex-start",
                   width: "100%",
-                  padding: collapsed ? "8px 0" : `${token.paddingXS}px 0`,
+                  padding: collapsed ? "8px" : `${token.paddingXS}px`,
                 }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = token.colorBgContainerDisabled)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
               >
                 <Avatar size={collapsed ? 40 : 48} src={item.avatar} />
                 {!collapsed && (

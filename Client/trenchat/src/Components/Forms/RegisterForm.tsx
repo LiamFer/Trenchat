@@ -62,7 +62,7 @@ export default function RegisterForm() {
         >
           <Input
             minLength={6}
-            maxLength={12}
+            maxLength={18}
             prefix={<UserOutlined />}
             placeholder="Your name"
           />

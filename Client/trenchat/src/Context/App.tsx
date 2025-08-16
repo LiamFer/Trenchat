@@ -8,7 +8,7 @@ export const useAppConfigs = () => {
 };
 
 export const AppProvider = ({ children }: any) => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuActive, setMenuActive] = useState(false);
   const [userMenuActive, setUserMenuActive] = useState(false);
@@ -28,7 +28,6 @@ export const AppProvider = ({ children }: any) => {
 
   useEffect(() => {
     setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
-    setDarkMode(false)
   }, []);
 
   return (
@@ -49,7 +48,6 @@ export const AppProvider = ({ children }: any) => {
           token: {
             colorPrimary: "#1677ff",
             colorInfo: "#1677ff",
-            colorBgBase: darkMode ? "#020817" : "",
           },
           algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         }}
