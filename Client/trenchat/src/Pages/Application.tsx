@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import useUser from "../Hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import { Layout, App } from "antd";
@@ -16,7 +16,6 @@ export default function Application() {
   const stompClient = useRef<Client | null>(null);
   const user = useUser();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     if (!user) {
