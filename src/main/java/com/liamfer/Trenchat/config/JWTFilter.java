@@ -52,6 +52,14 @@ public class JWTFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
+
+            // Limpando o Cookie caso ele seja Inválido
+            Cookie cookie = new Cookie("jwt-token", null);
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+
             response.setContentType("application/json");
             response.getWriter().write("{\"code\":401,\"message\":\"Token Expired/Invalid\"}");
             return;

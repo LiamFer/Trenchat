@@ -1,53 +1,51 @@
-import React from "react";
-import { Select, Avatar, Tag } from "antd";
-import type { SelectProps } from "antd";
+import React, { useState, useMemo } from "react";
+import { Select, Avatar, Tag, Spin } from "antd";
+import debounce from "lodash.debounce";
+import { searchUsers } from "../../Service/server.service";
 
 interface User {
-  id: string;
   name: string;
   email: string;
-  avatar: string;
+  picture: string;
 }
 
-const users: User[] = [
-  {
-    id: "1",
-    name: "William Fernandes",
-    email: "william@email.com",
-    avatar: "https://i.pravatar.cc/150?img=1",
-  },
-  {
-    id: "2",
-    name: "Maria Souza",
-    email: "maria@email.com",
-    avatar: "https://i.pravatar.cc/150?img=2",
-  },
-  {
-    id: "3",
-    name: "João Silva",
-    email: "joao@email.com",
-    avatar: "https://i.pravatar.cc/150?img=3",
-  },
-];
-
-const options: SelectProps["options"] = users.map((user) => ({
-  value: user.email, // aqui value é o ID do user
-  label: user.name, // label oficial (usado internamente)
-  user, // extra (usado no optionRender)
-}));
-
 export default function SearchUsers() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchUsers = async (query: string) => {
+    setLoading(true);
+    const response = await searchUsers(query);
+    if (response?.success) {
+      setUsers(response.data);
+    }
+    setLoading(false);
+  };
+
+  // Debounce para evitar muitas chamadas à API
+  const debouncedFetch = useMemo(() => debounce(fetchUsers, 500), []);
+
   return (
     <Select
       mode="multiple"
       style={{ width: "100%" }}
       placeholder="Pesquisar usuários..."
-      options={options}
+      showSearch
+      onSearch={(value) => {
+        debouncedFetch(value);
+      }}
+      notFoundContent={loading ? <Spin size="small" /> : null}
+      optionLabelProp="label"
+      options={users.map((user) => ({
+        value: user.email,
+        label: user.name,
+        user,
+      }))}
       optionRender={(option) => {
         const u = (option.data as any).user as User;
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Avatar src={u.avatar} size="small" />
+            <Avatar src={u.picture} size="small" />
             <div
               style={{
                 display: "flex",
@@ -62,7 +60,7 @@ export default function SearchUsers() {
         );
       }}
       tagRender={({ value, closable, onClose }) => {
-        const u = users.find((usr) => usr.id === value);
+        const u = users.find((usr) => usr.email === value);
         if (!u) return null;
 
         return (
@@ -77,7 +75,7 @@ export default function SearchUsers() {
               maxWidth: 200,
             }}
           >
-            <Avatar src={u.avatar} size="small" />
+            <Avatar src={u.picture} size="small" />
             <span
               style={{
                 marginLeft: 6,

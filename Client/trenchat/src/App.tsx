@@ -13,7 +13,7 @@ export default function App() {
   useEffect(() => {
     const fetchToken = async () => {
       const response = await authMe();
-      if (response.success) {
+      if (response?.success) {
         dispatch(setUser(response.data));
       }
       setLoading(false);

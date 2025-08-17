@@ -106,7 +106,7 @@ const Sidebar = () => {
           >
             <Avatar
               size={collapsed ? 40 : 64}
-              src="https://i.pinimg.com/474x/07/c4/72/07c4720d19a9e9edad9d0e939eca304a.jpg?nii=t"
+              src={user?.picture}
               style={{
                 marginBottom: collapsed ? 0 : token.marginSM,
                 flexShrink: 0,

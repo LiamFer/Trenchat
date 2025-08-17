@@ -26,6 +26,7 @@ public class UserEntity implements UserDetails {
     @Email
     private String email;
     private String password;
+    private String picture = "https://i.pinimg.com/474x/07/c4/72/07c4720d19a9e9edad9d0e939eca304a.jpg?nii=t";
     private UserRole role;
 
     @Override

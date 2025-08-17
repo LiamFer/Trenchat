@@ -45,7 +45,7 @@ public class AuthService {
         var credentials = new UsernamePasswordAuthenticationToken(loginUserDTO.email(),loginUserDTO.password());
         authenticationManager.authenticate(credentials);
         UserEntity user = findUserByEmail(loginUserDTO.email());
-        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail());
+        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail(),user.getPicture());
     }
 
     public String generateToken(LoginUserDTO loginUserDTO){
@@ -57,7 +57,7 @@ public class AuthService {
     public UserLoginResponseDTO authenticateMe(String token){
         String email = jwtService.validateToken(token);
         UserEntity user = findUserByEmail(email);
-        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail());
+        return new UserLoginResponseDTO(user.getId(),user.getName(),user.getEmail(),user.getPicture());
     }
 
     private void checkIfEmailIsAvailable(String email){
