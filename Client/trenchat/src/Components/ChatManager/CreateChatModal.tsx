@@ -1,15 +1,17 @@
-import { Button, Modal } from "antd";
+import { Modal } from "antd";
 import React, { useState } from "react";
 import SearchUsers from "./SearchUsers";
 import { createChat } from "../../Service/server.service";
+import type { Chat } from "../../types/SocketCreatedChat";
 
-interface User {
-  name: string;
-  email: string;
-  picture: string;
+interface CreateChatModalProps {
+  isOpen: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
 }
 
-export default function CreateChatModal({ isOpen, setOpen }) {
+
+const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setChats }) => {
   const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -17,10 +19,11 @@ export default function CreateChatModal({ isOpen, setOpen }) {
     setLoading(true);
     try {
       const chatInfo = { isGroup: false, participantsEmails: selectedUsers };
-      await createChat(chatInfo);
+      const newChat = await createChat(chatInfo);
       setLoading(false);
       setOpen(false);
       setSelectedUsers([]);
+      setChats((prev) => [...prev, newChat?.data as Chat])
     } catch (e) {
       setLoading(false);
     }
@@ -55,3 +58,5 @@ export default function CreateChatModal({ isOpen, setOpen }) {
     </Modal>
   );
 }
+
+export default CreateChatModal

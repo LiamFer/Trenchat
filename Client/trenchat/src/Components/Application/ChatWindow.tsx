@@ -4,6 +4,8 @@ import "../../Styles/ChatWindow.css";
 import { Client } from "@stomp/stompjs";
 import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
+import type { Chat } from "../../types/SocketCreatedChat";
+import Loading from "../Loading/Loading";
 
 interface Message {
   type: "sent" | "received";
@@ -12,12 +14,11 @@ interface Message {
   time: string;
 }
 
-// const messages: Message[] = [
-//     { type: 'received', text: 'Hey Bill, nice to meet you!', user: 'Henry Boyd', time: '9h ago' },
-//     { type: 'sent', text: 'Hi Henry!', time: '9h ago' },
-// ];
+interface ChatWindowProps {
+  activeChat: Chat | null;
+}
 
-const ChatWindow: React.FC = () => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
   const { token } = theme.useToken();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
@@ -30,23 +31,29 @@ const ChatWindow: React.FC = () => {
   };
 
   useEffect(() => {
-    stompClient.current = createStompClient("test", (msg) => {
-      const newMsg: Message = {
-        type: msg.sender === user?.name ? "sent" : "received",
-        text: msg.content,
-        user: msg.sender,
-        time: new Date().toLocaleTimeString(),
-      };
-      if (msg.sender != user?.name) {
-        setMessages((prev) => [...prev, newMsg]);
-      }
-    });
+    if (activeChat) {
+      stompClient.current = createStompClient(activeChat.id, (msg) => {
+        const newMsg: Message = {
+          type: msg.sender === user?.name ? "sent" : "received",
+          text: msg.content,
+          user: msg.sender,
+          time: new Date().toLocaleTimeString(),
+        };
+        if (msg.sender != user?.name) {
+          setMessages((prev) => [...prev, newMsg]);
+        }
+      });
+    }
     return () => {
       if (stompClient.current) {
         stompClient.current.deactivate();
       }
     };
-  }, [user]);
+  }, [user, activeChat]);
+
+  useEffect(() => {
+    setMessages([]);
+  }, [activeChat]);
 
   useEffect(() => {
     scrollToBottom();
@@ -55,7 +62,7 @@ const ChatWindow: React.FC = () => {
   const onSearch = (value: string) => {
     if (!stompClient.current || !user || value.length == 0) return;
     const payload = {
-      room: "test",
+      room: activeChat.id,
       sender: user.name,
       content: value,
       timestamp: new Date().toISOString(),
@@ -76,6 +83,8 @@ const ChatWindow: React.FC = () => {
     setInputValue("");
   };
 
+  if (!activeChat) return <Loading />;
+
   return (
     <div
       className="chat-window-container"
@@ -88,13 +97,13 @@ const ChatWindow: React.FC = () => {
           borderBottom: `1px solid ${token.colorBorder}`,
         }}
       >
-        <Avatar src="https://i.pravatar.cc/150?img=1" size={48} />
+        <Avatar src={activeChat?.picture} size={48} />
         <div className="chat-header-info">
           <div
             className="chat-header-name"
             style={{ color: token.colorTextHeading }}
           >
-            Henry Boyd
+            {activeChat?.name}
           </div>
           <div
             className="chat-header-status"
@@ -111,10 +120,7 @@ const ChatWindow: React.FC = () => {
         {messages.map((message, index) => (
           <div key={index} className={`message-row ${message.type}`}>
             {message.type === "received" && (
-              <Avatar
-                src="https://i.pravatar.cc/150?img=1"
-                className="message-avatar"
-              />
+              <Avatar src={activeChat?.picture} className="message-avatar" />
             )}
             <div
               className={`message-bubble ${message.type}`}
@@ -135,10 +141,7 @@ const ChatWindow: React.FC = () => {
               </span>
             </div>
             {message.type === "sent" && (
-              <Avatar
-                src={user?.picture || "https://i.pinimg.com/474x/07/c4/72/07c4720d19a9e9edad9d0e939eca304a.jpg?nii=t"}
-                className="message-avatar"
-              />
+              <Avatar src={user?.picture} className="message-avatar" />
             )}
           </div>
         ))}

@@ -1,7 +1,8 @@
 import axios from "axios";
 import { serverApi } from "../API/server";
+import type { APIResponse } from "../types/ApiResponse";
 
-function defaultFallback(error: any) {
+function defaultFallback(error: any) : APIResponse {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const message = error.response?.data?.message || "Unknown Error";
@@ -21,7 +22,7 @@ function defaultFallback(error: any) {
   return { success: false, error: "Unexpected Error." };
 }
 
-export async function register(name: string, email: string, password: string) {
+export async function register(name: string, email: string, password: string) : Promise<APIResponse>{
   try {
     const response = await serverApi.post(`/auth/register`, {
       name,
@@ -38,7 +39,7 @@ export async function register(name: string, email: string, password: string) {
   }
 }
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string) : Promise<APIResponse>{
   try {
     const response = await serverApi.post(`/auth/login`, { email, password });
     return { success: true, data: response.data };
@@ -47,7 +48,7 @@ export async function login(email: string, password: string) {
   }
 }
 
-export async function authMe() {
+export async function authMe() : Promise<APIResponse>{
   try {
     const response = await serverApi.get(`/auth/me`);
     return { success: true, data: response.data };
@@ -56,7 +57,7 @@ export async function authMe() {
   }
 }
 
-export async function searchUsers(email: string) {
+export async function searchUsers(email: string) : Promise<APIResponse>{
   try {
     const response = await serverApi.get(`/user/search`, {
       params: {
@@ -69,9 +70,18 @@ export async function searchUsers(email: string) {
   }
 }
 
-export async function createChat(chatInfos: object) {
+export async function createChat(chatInfos: object) : Promise<APIResponse>{
   try {
     const response = await serverApi.post(`/chat`, chatInfos);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
+export async function fetchUserChats() : Promise<APIResponse>{
+  try {
+    const response = await serverApi.get(`/chat`);
     return { success: true, data: response.data };
   } catch (error: any) {
     return defaultFallback(error);

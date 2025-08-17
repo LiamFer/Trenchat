@@ -8,28 +8,21 @@ import {
 import "../../Styles/Sidebar.css";
 import useUser from "../../Hooks/useUser";
 import CreateChatModal from "./../ChatManager/CreateChatModal";
+import type { Chat } from "../../types/SocketCreatedChat";
 
 const { Sider } = Layout;
 
-const activeConversations = [
-  { name: "Henry Boyd", avatar: "https://i.pravatar.cc/150?img=1", unread: 3 },
-  {
-    name: "Martha Curtis",
-    avatar: "https://i.pravatar.cc/150?img=2",
-    unread: 2,
-  },
-  { name: "John Doe", avatar: "https://i.pravatar.cc/150?img=3" },
-  { name: "Jane Smith", avatar: "https://i.pravatar.cc/150?img=4", unread: 1 },
-  { name: "Mike Brown", avatar: "https://i.pravatar.cc/150?img=5" },
-  { name: "Emily White", avatar: "https://i.pravatar.cc/150?img=6", unread: 4 },
-  { name: "Chris Green", avatar: "https://i.pravatar.cc/150?img=7" },
-  { name: "Anna Black", avatar: "https://i.pravatar.cc/150?img=8", unread: 1 },
-  { name: "Anna Black", avatar: "https://i.pravatar.cc/150?img=8", unread: 1 },
-  { name: "Anna Black", avatar: "https://i.pravatar.cc/150?img=8", unread: 1 },
-  // Adicione mais chats para testar scroll
-];
+interface SidebarProps {
+  chats: Chat[];
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
+  setActiveChat: React.Dispatch<React.SetStateAction<Chat | null>>;
+}
 
-const Sidebar = () => {
+const Sidebar: React.FC<SidebarProps> = ({
+  chats,
+  setChats,
+  setActiveChat,
+}) => {
   const user = useUser();
   const { token } = theme.useToken();
   const [collapsed, setCollapsed] = useState(false);
@@ -186,7 +179,7 @@ const Sidebar = () => {
                 scrollbarWidth: "none",
               }}
             >
-              {activeConversations.map((item, index) => (
+              {chats.map((item, index) => (
                 <div
                   key={index}
                   className="conversation-item"
@@ -199,6 +192,7 @@ const Sidebar = () => {
                     width: "100%",
                     padding: collapsed ? "8px" : `${token.paddingXS}px`,
                   }}
+                  onClick={() => setActiveChat(item)}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.backgroundColor =
                       token.colorBgContainerDisabled)
@@ -207,7 +201,7 @@ const Sidebar = () => {
                     (e.currentTarget.style.backgroundColor = "transparent")
                   }
                 >
-                  <Avatar size={collapsed ? 40 : 48} src={item.avatar} />
+                  <Avatar size={collapsed ? 40 : 48} src={item.picture} />
                   {!collapsed && (
                     <>
                       <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>
@@ -223,7 +217,7 @@ const Sidebar = () => {
                           {item.name === "Henry Boyd" ? "Active" : ""}
                         </div>
                       </div>
-                      {item.unread && (
+                      {/* {item?.unread && (
                         <span
                           style={{
                             backgroundColor: token.colorError,
@@ -235,7 +229,7 @@ const Sidebar = () => {
                         >
                           {item.unread}
                         </span>
-                      )}
+                      )} */}
                     </>
                   )}
                 </div>
@@ -270,7 +264,7 @@ const Sidebar = () => {
         </div> */}
         </div>
       </Sider>
-      <CreateChatModal isOpen={isModalOpen} setOpen={setIsModalOpen} />
+      <CreateChatModal isOpen={isModalOpen} setOpen={setIsModalOpen} setChats={setChats} />
     </>
   );
 };

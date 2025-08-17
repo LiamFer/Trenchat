@@ -47,19 +47,21 @@ public class ChatService {
         });
 
         chat.setParticipants(participants);
-
         ChatDTO chatDTO = modelMapper.map(chatRepository.save(chat), ChatDTO.class);
 
-        UserEntity participant = participants.stream().findFirst().get();
-
-        chatDTO.setPicture(user.getPicture());
-        chatDTO.setName(user.getName());
         getParticipantsIds(createChatDTO.participantsEmails()).forEach(id -> {
-            messagingTemplate.convertAndSend("/topic/" + id, new SocketCreatedChatDTO("new chat", chatDTO));
+            ChatDTO dtoForOther = modelMapper.map(chatDTO, ChatDTO.class);
+            dtoForOther.setName(user.getName());
+            dtoForOther.setPicture(user.getPicture());
+            messagingTemplate.convertAndSend("/topic/" + id, new SocketCreatedChatDTO("new chat", dtoForOther));
         });
 
-        chatDTO.setPicture(participant.getPicture());
-        chatDTO.setName(participant.getName());
+        UserEntity otherParticipant = participants.stream()
+                .filter(p -> !p.getId().equals(user.getId()))
+                .findFirst()
+                .orElse(user);
+        chatDTO.setName(otherParticipant.getName());
+        chatDTO.setPicture(otherParticipant.getPicture());
         return chatDTO;
     }
 

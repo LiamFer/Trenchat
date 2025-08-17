@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import useUser from "../Hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import { Layout, App } from "antd";
@@ -8,28 +8,45 @@ import RightSidebar from "../Components/Application/RightSidebar";
 import "../Styles/Application.css";
 import { Client } from "@stomp/stompjs";
 import { createStompClient } from "../API/socket";
+import type { Chat, SocketCreatedChat } from "../types/SocketCreatedChat";
+import { fetchUserChats } from "../Service/server.service";
 
 const { Content } = Layout;
 
 export default function Application() {
-  const { notification } = App.useApp();
   const stompClient = useRef<Client | null>(null);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [activeChat,setActiveChat] = useState<Chat | null>(null);
   const user = useUser();
   const navigate = useNavigate();
+  const { notification } = App.useApp();
 
   useEffect(() => {
     if (!user) {
       navigate("/login");
     } else {
       navigate("/");
-      stompClient.current = createStompClient(user.id, (msg) => {
-        notification.warning({
-          message: "New Message Received",
-          description: `You received a new Message!`,
-          placement: "topRight",
-          pauseOnHover: true,
-        });
-      });
+      const fetchChats = async () => {
+        const response = await fetchUserChats();
+        if (response?.success) {
+          setChats(response?.data as Chat[]);
+        }
+      };
+      fetchChats();
+      stompClient.current = createStompClient(
+        user.id,
+        (msg: SocketCreatedChat) => {
+          if (msg?.action == "new chat") {
+            setChats((prevChats) => [...prevChats, msg.chatDTO])
+            notification.info({
+              message: "New Chat Created",
+              description: `${msg.chatDTO.name} wants to Talk to you!`,
+              placement: "topRight",
+              pauseOnHover: true,
+            });
+          }
+        }
+      );
     }
     return () => {
       if (stompClient.current) {
@@ -40,10 +57,10 @@ export default function Application() {
 
   return (
     <Layout className="app-layout">
-      <Sidebar/>
+      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat}/>
 
       <Content className="chat-window-container">
-        <ChatWindow />
+        <ChatWindow activeChat={activeChat}/>
       </Content>
 
       <RightSidebar />
