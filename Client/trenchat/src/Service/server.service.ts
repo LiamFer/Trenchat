@@ -68,3 +68,12 @@ export async function searchUsers(email: string) {
     return defaultFallback(error);
   }
 }
+
+export async function createChat(chatInfos: object) {
+  try {
+    const response = await serverApi.post(`/chat`, chatInfos);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}

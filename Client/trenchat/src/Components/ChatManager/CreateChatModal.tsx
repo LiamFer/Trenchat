@@ -1,6 +1,7 @@
 import { Button, Modal } from "antd";
 import React, { useState } from "react";
 import SearchUsers from "./SearchUsers";
+import { createChat } from "../../Service/server.service";
 
 interface User {
   name: string;
@@ -15,10 +16,10 @@ export default function CreateChatModal({ isOpen, setOpen }) {
   const handleOk = async () => {
     setLoading(true);
     try {
-      setTimeout(() => {
-        setLoading(false);
-        setOpen(false);
-      }, 1500);
+      const chatInfo = { isGroup: false, participantsEmails: selectedUsers };
+      await createChat(chatInfo);
+      setLoading(false);
+      setOpen(false);
       setSelectedUsers([]);
     } catch (e) {
       setLoading(false);
@@ -46,7 +47,10 @@ export default function CreateChatModal({ isOpen, setOpen }) {
       </p>
 
       <div style={{ marginBottom: 16 }}>
-        <SearchUsers selectedUsers={selectedUsers} setSelectedUsers={setSelectedUsers} />
+        <SearchUsers
+          selectedUsers={selectedUsers}
+          setSelectedUsers={setSelectedUsers}
+        />
       </div>
     </Modal>
   );

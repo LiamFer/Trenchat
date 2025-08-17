@@ -30,7 +30,7 @@ export default function SearchUsers({ selectedUsers, setSelectedUsers }) {
       mode="multiple"
       value={selectedUsers}
       onChange={(vals: User[]) => setSelectedUsers(vals)}
-      maxCount={11}
+      maxCount={1}
       style={{ width: "100%" }}
       placeholder="Pesquisar usuários..."
       showSearch
