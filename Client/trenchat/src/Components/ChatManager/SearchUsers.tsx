@@ -9,9 +9,9 @@ interface User {
   picture: string;
 }
 
-export default function SearchUsers() {
-  const [users, setUsers] = useState<User[]>([]);
+export default function SearchUsers({ selectedUsers, setSelectedUsers }) {
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
 
   const fetchUsers = async (query: string) => {
     setLoading(true);
@@ -28,6 +28,9 @@ export default function SearchUsers() {
   return (
     <Select
       mode="multiple"
+      value={selectedUsers}
+      onChange={(vals: User[]) => setSelectedUsers(vals)}
+      maxCount={11}
       style={{ width: "100%" }}
       placeholder="Pesquisar usuários..."
       showSearch

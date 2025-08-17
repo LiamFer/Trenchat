@@ -22,8 +22,11 @@ public class UserService {
 
     public List<SearchedUserDTO> searchUsers(String email, UserDetails user){
         // Retorno só 10 Usuários na Pesquisa
-        List<UserEntity> users = userRepository.findByEmailContainingIgnoreCase(email, PageRequest.of(0,10)).getContent();
-        users.removeIf(u -> u.getEmail().equals(user.getUsername()));
-        return users.stream().map(u -> modelMapper.map(u, SearchedUserDTO.class)).toList();
+        List<UserEntity> users = userRepository.findByEmailContainingIgnoreCase(email, PageRequest.of(0,10))
+                .getContent()
+                .stream()
+                .filter(u -> !u.getEmail().equals(user.getUsername()))
+                .toList();
+        return users.stream().map(usr -> modelMapper.map(usr, SearchedUserDTO.class)).toList();
     }
 }

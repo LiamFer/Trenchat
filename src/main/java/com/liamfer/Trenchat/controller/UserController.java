@@ -24,6 +24,7 @@ public class UserController {
     @GetMapping("/search")
     public ResponseEntity<List<SearchedUserDTO>> searchUsers(@RequestParam(name = "email", defaultValue = "") String email,
                                                              @AuthenticationPrincipal UserDetails user){
+//        return ResponseEntity.ok("sim");
         return ResponseEntity.ok(userService.searchUsers(email,user));
     }
 }

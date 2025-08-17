@@ -2,19 +2,24 @@ import { Button, Modal } from "antd";
 import React, { useState } from "react";
 import SearchUsers from "./SearchUsers";
 
+interface User {
+  name: string;
+  email: string;
+  picture: string;
+}
+
 export default function CreateChatModal({ isOpen, setOpen }) {
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const handleOk = async () => {
     setLoading(true);
     try {
-      // aqui você chamaria a API para criar o chat
-      console.log("Criar chat com usuários:", selected);
       setTimeout(() => {
         setLoading(false);
         setOpen(false);
       }, 1500);
+      setSelectedUsers([]);
     } catch (e) {
       setLoading(false);
     }
@@ -41,21 +46,8 @@ export default function CreateChatModal({ isOpen, setOpen }) {
       </p>
 
       <div style={{ marginBottom: 16 }}>
-        <SearchUsers />
+        <SearchUsers selectedUsers={selectedUsers} setSelectedUsers={setSelectedUsers} />
       </div>
-
-      {selected.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <strong>Participantes selecionados:</strong>
-          <ul style={{ marginTop: 6 }}>
-            {selected.map((id) => (
-              <li key={id} style={{ color: "#555" }}>
-                {id}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </Modal>
   );
 }

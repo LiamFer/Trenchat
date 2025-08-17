@@ -43,7 +43,7 @@ export async function login(email: string, password: string) {
     const response = await serverApi.post(`/auth/login`, { email, password });
     return { success: true, data: response.data };
   } catch (error: any) {
-    defaultFallback(error);
+    return defaultFallback(error);
   }
 }
 
@@ -52,7 +52,7 @@ export async function authMe() {
     const response = await serverApi.get(`/auth/me`);
     return { success: true, data: response.data };
   } catch (error: any) {
-    defaultFallback(error);
+    return defaultFallback(error);
   }
 }
 
@@ -65,6 +65,6 @@ export async function searchUsers(email: string) {
     });
     return { success: true, data: response.data };
   } catch (error: any) {
-    defaultFallback(error);
+    return defaultFallback(error);
   }
 }
