@@ -2,8 +2,7 @@ package com.liamfer.Trenchat.controller;
 
 import com.liamfer.Trenchat.dto.chat.ChatMessage;
 import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
-import com.liamfer.Trenchat.dto.chat.CreatedChatDTO;
-import com.liamfer.Trenchat.entity.ChatEntity;
+import com.liamfer.Trenchat.dto.chat.ChatDTO;
 import com.liamfer.Trenchat.service.ChatService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -13,8 +12,11 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @Controller
 public class ChatController {
@@ -40,7 +42,12 @@ public class ChatController {
 
     // --- REST endpoints ---
     @PostMapping("/chat")
-    public ResponseEntity<CreatedChatDTO> createChat(@RequestBody @Valid CreateChatDTO createChatDTO, @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<ChatDTO> createChat(@RequestBody @Valid CreateChatDTO createChatDTO, @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(chatService.createChat(createChatDTO,user));
+    }
+
+    @GetMapping("/chat")
+    public ResponseEntity<List<ChatDTO>> fetchChats(@AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(chatService.fetchUserChats(user));
     }
 }

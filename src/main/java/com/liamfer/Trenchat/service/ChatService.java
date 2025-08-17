@@ -1,7 +1,8 @@
 package com.liamfer.Trenchat.service;
 
 import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
-import com.liamfer.Trenchat.dto.chat.CreatedChatDTO;
+import com.liamfer.Trenchat.dto.chat.ChatDTO;
+import com.liamfer.Trenchat.dto.chat.SocketCreatedChatDTO;
 import com.liamfer.Trenchat.entity.ChatEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
 import com.liamfer.Trenchat.repository.ChatRepository;
@@ -31,10 +32,10 @@ public class ChatService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public CreatedChatDTO createChat(CreateChatDTO createChatDTO, UserDetails userDetails){
+    public ChatDTO createChat(CreateChatDTO createChatDTO, UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
         ChatEntity chat = new ChatEntity();
-        if(createChatDTO.isGroup()){
+        if (createChatDTO.isGroup()) {
             chat.setName(createChatDTO.name());
             chat.setIsGroup(true);
         }
@@ -47,24 +48,39 @@ public class ChatService {
 
         chat.setParticipants(participants);
 
-        CreatedChatDTO createdChatDTO = modelMapper.map(chatRepository.save(chat), CreatedChatDTO.class);
+        ChatDTO chatDTO = modelMapper.map(chatRepository.save(chat), ChatDTO.class);
 
-        getParticipantsIds(createChatDTO.participantsEmails()).forEach(id ->{
-            createdChatDTO.setName(user.getName());
-            messagingTemplate.convertAndSend("/topic/" + id, createdChatDTO);
+        UserEntity participant = participants.stream().findFirst().get();
+
+        chatDTO.setPicture(user.getPicture());
+        chatDTO.setName(user.getName());
+        getParticipantsIds(createChatDTO.participantsEmails()).forEach(id -> {
+            messagingTemplate.convertAndSend("/topic/" + id, new SocketCreatedChatDTO("new chat", chatDTO));
         });
 
-        createdChatDTO.setName(participants.stream().findFirst().get().getName());
-        return createdChatDTO;
+        chatDTO.setPicture(participant.getPicture());
+        chatDTO.setName(participant.getName());
+        return chatDTO;
     }
 
-    public List<String> getParticipantsIds (List<String> participantsEmails){
+    public List<ChatDTO> fetchUserChats(UserDetails userDetails) {
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        return chatRepository.findAllByParticipantsId(user.getId()).stream().map(chat -> {
+            ChatDTO chatDTO = modelMapper.map(chat, ChatDTO.class);
+            UserEntity other = chat.getParticipants().stream().filter(p -> p.getId()!=user.getId()).findFirst().orElseThrow();
+            chatDTO.setName(other.getName());
+            chatDTO.setPicture(other.getPicture());
+            return chatDTO;
+        }).toList();
+    }
+
+    public List<String> getParticipantsIds(List<String> participantsEmails) {
         return participantsEmails.stream().map(email -> findUserByEmail(email).getId()).toList();
     }
 
-    private UserEntity findUserByEmail(String email){
+    private UserEntity findUserByEmail(String email) {
         Optional<UserEntity> user = userRepository.findByEmail(email);
-        if(user.isPresent()){
+        if (user.isPresent()) {
             return user.get();
         }
         throw new EntityNotFoundException("Usuário não Encontrado");

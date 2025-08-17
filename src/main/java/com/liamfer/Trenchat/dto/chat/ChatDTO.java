@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreatedChatDTO{
+public class ChatDTO {
     public String id;
     public String name;
+    public String picture;
 }
