@@ -7,7 +7,7 @@ const RightSidebar: React.FC = () => {
     const { token } = theme.useToken();
     
     return (
-        <div className="right-sidebar-container">
+        <div className="right-sidebar-container" style={{"backgroundColor":token.colorBgContainer}}>
             <Card className="profile-card" bordered={false}>
                 <div className="profile-avatar-container">
                     <Avatar size={80}>HB</Avatar>
