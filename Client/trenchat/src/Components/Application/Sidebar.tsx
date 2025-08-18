@@ -9,6 +9,7 @@ import "../../Styles/Sidebar.css";
 import useUser from "../../Hooks/useUser";
 import CreateChatModal from "./../ChatManager/CreateChatModal";
 import type { Chat } from "../../types/SocketCreatedChat";
+import ProfilePictureModal from "./ProfilePictureModal";
 
 const { Sider } = Layout;
 
@@ -25,6 +26,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const user = useUser();
   const { token } = theme.useToken();
+  const [open, setOpen] = useState(false);
+
   const [collapsed, setCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -126,6 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Button
                 type="text"
                 icon={<SettingOutlined />}
+                onClick={()=>setOpen(true)}
                 style={{
                   position: "absolute",
                   top: 8,
@@ -194,8 +198,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   }}
                   onClick={() => setActiveChat(item)}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      token.colorBgContainerDisabled)
+                  (e.currentTarget.style.backgroundColor =
+                    token.colorBgContainerDisabled)
                   }
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.backgroundColor = "transparent")
@@ -265,6 +269,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </Sider>
       <CreateChatModal isOpen={isModalOpen} setOpen={setIsModalOpen} setChats={setChats} />
+      <ProfilePictureModal
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 };
