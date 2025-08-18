@@ -1,9 +1,11 @@
 import React from 'react';
-import { Card, Avatar, Button, Col, Row, Statistic } from 'antd';
+import { Card, Avatar, Button, Col, Row, Statistic, theme } from 'antd';
 import { MailOutlined, FolderOutlined } from '@ant-design/icons';
 import '../../Styles/RightSidebar.css';
 
 const RightSidebar: React.FC = () => {
+    const { token } = theme.useToken();
+    
     return (
         <div className="right-sidebar-container">
             <Card className="profile-card" bordered={false}>

@@ -115,7 +115,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             </div>
             <div
                 className="messages-list"
-                style={{ backgroundColor: token.colorBgContainer }}
+                style={{ backgroundColor: token.colorBgLayout }}
             >
                 {messages.map((message, index) => (
                     <div key={index} className={`message-row ${message.type}`}>
