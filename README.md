@@ -15,6 +15,7 @@ O **Trenchat** é uma aplicação de chat em tempo real desenvolvida com **Sprin
 - **Java 17+**
 - **Spring Boot** (Web, WebSocket, Security)
 - **STOMP sobre WebSocket**
+- **Cloudinary** para armazenamento de Imagens
 - **Maven**
 - **Lombok**
 - **Supabase PostgreSQL** (configurável)
