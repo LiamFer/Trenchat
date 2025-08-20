@@ -205,7 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     (e.currentTarget.style.backgroundColor = "transparent")
                   }
                 >
-                  <Avatar size={collapsed ? 40 : 48} src={item.picture} />
+                  <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
                   {!collapsed && (
                     <>
                       <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>

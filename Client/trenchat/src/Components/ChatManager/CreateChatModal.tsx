@@ -1,6 +1,6 @@
 import { Modal } from "antd";
 import React, { useState } from "react";
-import SearchUsers from "./SearchUsers";
+import SearchUsers, { type User } from "./SearchUsers";
 import { createChat } from "../../Service/server.service";
 import type { Chat } from "../../types/SocketCreatedChat";
 
@@ -10,28 +10,34 @@ interface CreateChatModalProps {
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
 }
 
-
 const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setChats }) => {
   const [loading, setLoading] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [groupName, setGroupName] = useState("");
 
   const handleOk = async () => {
+    if (selectedUsers.length > 1 && !groupName.trim()) {
+      return;
+    }
+
     setLoading(true);
     try {
-      const chatInfo = { isGroup: false, participantsEmails: selectedUsers };
+      const chatInfo = {
+        isGroup: selectedUsers.length > 1,
+        groupName: selectedUsers.length > 1 ? groupName : undefined,
+        participantsEmails: selectedUsers.map((u) => u.email),
+      };
       const newChat = await createChat(chatInfo);
       setLoading(false);
       setOpen(false);
       setSelectedUsers([]);
-      setChats((prev) => [...prev, newChat?.data as Chat])
+      setGroupName("");
+      setChats((prev) => [...prev, newChat?.data as Chat]);
     } catch (e) {
       setLoading(false);
     }
   };
-
-  const handleCancel = () => {
-    setOpen(false);
-  };
+  const handleCancel = () => setOpen(false);
 
   return (
     <Modal
@@ -46,17 +52,15 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setC
       width={500}
     >
       <p style={{ marginBottom: 12, color: "#666" }}>
-        Selecione um ou mais usuários para iniciar a conversa.
+        Pesquise e selecione usuários para iniciar a conversa.
       </p>
 
-      <div style={{ marginBottom: 16 }}>
-        <SearchUsers
-          selectedUsers={selectedUsers}
-          setSelectedUsers={setSelectedUsers}
-        />
-      </div>
+      <SearchUsers
+        selectedUsers={selectedUsers}
+        setSelectedUsers={setSelectedUsers}
+      />
     </Modal>
   );
-}
+};
 
-export default CreateChatModal
+export default CreateChatModal;
