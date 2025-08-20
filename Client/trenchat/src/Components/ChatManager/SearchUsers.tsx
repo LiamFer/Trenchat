@@ -95,6 +95,18 @@ const SearchUsers: React.FC<Props> = ({ selectedUsers, setSelectedUsers, groupNa
         dropdownStyle={{ maxHeight: 280, overflowY: "auto" }}
       />
 
+      {/* Campo para nome do grupo */}
+      {selectedUsers.length > 1 && (
+        <div style={{ marginTop: 16 }}>
+          <Input
+            placeholder="Digite o nome do grupo"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            required
+          />
+        </div>
+      )}
+
       {selectedUsers.length > 0 && (
         <div style={{ marginTop: 16 }}>
           <List
@@ -125,17 +137,7 @@ const SearchUsers: React.FC<Props> = ({ selectedUsers, setSelectedUsers, groupNa
         </div>
       )}
 
-      {/* Campo para nome do grupo */}
-      {selectedUsers.length > 1 && (
-        <div style={{ marginTop: 16 }}>
-          <Input
-            placeholder="Digite o nome do grupo"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            required
-          />
-        </div>
-      )}
+      
     </div>
   );
 };
