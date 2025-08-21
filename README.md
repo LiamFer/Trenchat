@@ -5,7 +5,7 @@ O **Trenchat** é uma aplicação de chat em tempo real desenvolvida com **Sprin
 ## ✨ Funcionalidades
 
 - 📡 Mensagens em tempo real utilizando WebSockets
-- 💬 Suporte a múltiplas salas de chat
+- 💬 Suporte a múltiplas salas de chat (Grupos e Privadas)
 - 🔐 API REST simples para gerenciamento de usuários
 - ⚡ Backend leve e escalável
 - 🔗 Fácil integração com aplicações frontend modernas
