@@ -1,6 +1,7 @@
 # 🚆 Trenchat
 
 O **Trenchat** é uma aplicação de chat em tempo real desenvolvida com **Spring Boot** e **WebSockets**, permitindo comunicação instantânea entre usuários de forma simples, rápida e escalável.
+O frontend foi desenvolvido em **React** com **Ant Design**, garantindo uma interface moderna, responsiva e de fácil utilização.  
 
 ## ✨ Funcionalidades
 
