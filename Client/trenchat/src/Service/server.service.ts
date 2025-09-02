@@ -103,6 +103,14 @@ export async function uploadPicture(file: File) : Promise<APIResponse>{
     );
     return { success: true, data: response.data };
   } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || "Unknown Error";
+      { success: false, error: "Unexpected Error." }
+      if (status == 409){
+        console.log("Erro de CHat em duplicidade")
+      }
+    }
     return defaultFallback(error);
   }
 }

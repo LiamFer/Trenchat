@@ -1,4 +1,4 @@
-import { Modal } from "antd";
+import { Modal, App } from "antd";
 import React, { useState } from "react";
 import SearchUsers, { type User } from "./SearchUsers";
 import { createChat } from "../../Service/server.service";
@@ -14,6 +14,8 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setC
   const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [groupName, setGroupName] = useState("");
+  const { notification } = App.useApp();
+
 
   const handleOk = async () => {
     if (selectedUsers.length > 1 && !groupName.trim()) {
@@ -28,14 +30,18 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setC
         participantsEmails: selectedUsers.map((u) => u.email),
       };
       const newChat = await createChat(chatInfo);
-      console.log(chatInfo)
-      console.log(groupName)
       setLoading(false);
       setOpen(false);
       setSelectedUsers([]);
       setGroupName("");
       setChats((prev) => [...prev, newChat?.data as Chat]);
     } catch (e) {
+      notification.info({
+        message: "New Chat Created",
+        description: `${msg.chatDTO.name} wants to Talk to you!`,
+        placement: "topRight",
+        pauseOnHover: true,
+      });
       setLoading(false);
     }
   };

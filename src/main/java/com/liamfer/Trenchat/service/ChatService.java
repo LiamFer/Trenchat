@@ -5,6 +5,7 @@ import com.liamfer.Trenchat.dto.chat.ChatDTO;
 import com.liamfer.Trenchat.dto.chat.SocketCreatedChatDTO;
 import com.liamfer.Trenchat.entity.ChatEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
+import com.liamfer.Trenchat.exceptions.ChatAlreadyExists;
 import com.liamfer.Trenchat.repository.ChatRepository;
 import com.liamfer.Trenchat.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -38,6 +40,12 @@ public class ChatService {
     public ChatDTO createChat(CreateChatDTO createChatDTO, UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
         ChatEntity chat = new ChatEntity();
+
+        if (!createChatDTO.isGroup()){
+            checkIfChatCanBeCreated(user,createChatDTO);
+        }
+
+
         if (createChatDTO.isGroup()) {
             chat.setName(createChatDTO.name());
             chat.setIsGroup(true);
@@ -94,6 +102,24 @@ public class ChatService {
 
     public List<String> getParticipantsIds(List<String> participantsEmails) {
         return participantsEmails.stream().map(email -> findUserByEmail(email).getId()).toList();
+    }
+
+    private void checkIfChatCanBeCreated(UserEntity user,CreateChatDTO createChatDTO){
+        List<ChatEntity> chats = chatRepository.findAllByParticipantsId(user.getId())
+                .stream()
+                .filter(chat -> chat.getParticipants().size() == 2)
+                .toList();
+        Set<String> newChatEmails = new HashSet<>(createChatDTO.participantsEmails());
+        newChatEmails.add(user.getEmail());
+        chats.forEach(chat -> {
+            Set<String> existingChatEmails = chat.getParticipants()
+                    .stream()
+                    .map(UserEntity::getEmail)
+                    .collect(Collectors.toSet());
+            if (existingChatEmails.equals(newChatEmails)) {
+                throw new ChatAlreadyExists("Chat em Duplicidade");
+            }
+        });
     }
 
     private UserEntity findUserByEmail(String email) {

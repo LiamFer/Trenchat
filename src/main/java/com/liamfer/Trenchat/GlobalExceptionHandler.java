@@ -1,6 +1,7 @@
 package com.liamfer.Trenchat;
 
 import com.liamfer.Trenchat.dto.api.APIMessage;
+import com.liamfer.Trenchat.exceptions.ChatAlreadyExists;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -40,13 +41,13 @@ public class GlobalExceptionHandler {
                 .body(new APIMessage<String>(HttpStatus.BAD_REQUEST.value(),"Invalid Credentials"));
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<APIMessage<String>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+    @ExceptionHandler(ChatAlreadyExists.class)
+    public ResponseEntity<APIMessage<String>> handleDuplicatedChatError(ChatAlreadyExists ex) {
         APIMessage<String> message = new APIMessage<>(
-                HttpStatus.BAD_REQUEST.value(),
-                "Request body is missing or malformed"
+                HttpStatus.CONFLICT.value(),
+                "Este Chat já existe!"
         );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
     @ExceptionHandler(EntityExistsException.class)
