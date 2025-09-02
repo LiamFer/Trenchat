@@ -11,6 +11,7 @@ interface Message {
     type: "sent" | "received";
     text: string;
     user?: string;
+    picture?: string;
     time: string;
 }
 
@@ -37,6 +38,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     type: msg.sender === user?.name ? "sent" : "received",
                     text: msg.content,
                     user: msg.sender,
+                    picture: msg.picture,
                     time: new Date().toLocaleTimeString(),
                 };
                 if (msg.sender != user?.name) {
@@ -59,12 +61,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         scrollToBottom();
     }, [messages]);
 
-    const onSearch = (value: string) => {
+    const onSend = (value: string) => {
         if (!stompClient.current || !user || value.length == 0) return;
         const payload = {
             room: activeChat.id,
             sender: user.name,
             content: value,
+            picture: user.picture,
             timestamp: new Date().toISOString(),
         };
 
@@ -77,6 +80,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             type: "sent",
             text: value,
             user: user.name,
+            picture: user.picture,
             time: new Date().toLocaleTimeString(),
         };
         setMessages((prev) => [...prev, sentMessage]);
@@ -120,7 +124,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 {messages.map((message, index) => (
                     <div key={index} className={`message-row ${message.type}`}>
                         {message.type === "received" && (
-                            <Avatar src={activeChat?.picture} className="message-avatar" />
+                            <Avatar src={message.picture} className="message-avatar" />
                         )}
                         <div
                             className={`message-bubble ${message.type}`}
@@ -160,11 +164,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setInputValue(e.target.value)
                     }
-                    onPressEnter={() => onSearch(inputValue)}
+                    onPressEnter={() => onSend(inputValue)}
                 />
                 <span
                     className="send-button"
-                    onClick={() => onSearch(inputValue)}
+                    onClick={() => onSend(inputValue)}
                     style={{ color: token.colorPrimary }}
                 >
                     Send

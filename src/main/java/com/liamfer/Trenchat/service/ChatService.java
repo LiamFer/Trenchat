@@ -24,12 +24,15 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final String groupPicture;
 
     public ChatService(ChatRepository chatRepository, UserRepository userRepository, ModelMapper modelMapper, SimpMessagingTemplate messagingTemplate) {
         this.chatRepository = chatRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.messagingTemplate = messagingTemplate;
+        this.groupPicture = "https://cdn-icons-png.flaticon.com/512/6387/6387947.png";
+
     }
 
     public ChatDTO createChat(CreateChatDTO createChatDTO, UserDetails userDetails) {
@@ -51,10 +54,16 @@ public class ChatService {
 
         getParticipantsIds(createChatDTO.participantsEmails()).forEach(id -> {
             ChatDTO dtoForOther = modelMapper.map(chatDTO, ChatDTO.class);
-            dtoForOther.setName(user.getName());
-            dtoForOther.setPicture(user.getPicture());
+            dtoForOther.setName(createChatDTO.isGroup() ? createChatDTO.name() : user.getName());
+            dtoForOther.setPicture(createChatDTO.isGroup() ? groupPicture : user.getPicture());
             messagingTemplate.convertAndSend("/topic/" + id, new SocketCreatedChatDTO("new chat", dtoForOther));
         });
+
+        if(createChatDTO.isGroup()){
+            chatDTO.setName(createChatDTO.name());
+            chatDTO.setPicture(groupPicture);
+            return chatDTO;
+        }
 
         UserEntity otherParticipant = participants.stream()
                 .filter(p -> !p.getId().equals(user.getId()))
@@ -69,6 +78,13 @@ public class ChatService {
         UserEntity user = findUserByEmail(userDetails.getUsername());
         return chatRepository.findAllByParticipantsId(user.getId()).stream().map(chat -> {
             ChatDTO chatDTO = modelMapper.map(chat, ChatDTO.class);
+
+            if(chat.getIsGroup()){
+                chatDTO.setName(chat.getName());
+                chatDTO.setPicture(groupPicture);
+                return chatDTO;
+            }
+
             UserEntity other = chat.getParticipants().stream().filter(p -> p.getId()!=user.getId()).findFirst().orElseThrow();
             chatDTO.setName(other.getName());
             chatDTO.setPicture(other.getPicture());

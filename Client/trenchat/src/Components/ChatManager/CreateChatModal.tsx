@@ -24,10 +24,12 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setC
     try {
       const chatInfo = {
         isGroup: selectedUsers.length > 1,
-        groupName: selectedUsers.length > 1 ? groupName : undefined,
+        name: selectedUsers.length > 1 ? groupName : undefined,
         participantsEmails: selectedUsers.map((u) => u.email),
       };
       const newChat = await createChat(chatInfo);
+      console.log(chatInfo)
+      console.log(groupName)
       setLoading(false);
       setOpen(false);
       setSelectedUsers([]);
@@ -58,6 +60,8 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setC
       <SearchUsers
         selectedUsers={selectedUsers}
         setSelectedUsers={setSelectedUsers}
+        groupName={groupName}
+        setGroupName={setGroupName}
       />
     </Modal>
   );
