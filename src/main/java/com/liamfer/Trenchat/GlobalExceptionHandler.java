@@ -62,9 +62,9 @@ public class GlobalExceptionHandler {
                 .body(new APIMessage<String>(HttpStatus.NOT_FOUND.value(),ex.getMessage()));
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<APIMessage<String>> defaultExceptionHandler(Exception ex){
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(new APIMessage<String>(HttpStatus.INTERNAL_SERVER_ERROR.value(),ex.getMessage()));
-//    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<APIMessage<String>> defaultExceptionHandler(Exception ex){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new APIMessage<String>(HttpStatus.INTERNAL_SERVER_ERROR.value(),ex.getMessage()));
+    }
 }

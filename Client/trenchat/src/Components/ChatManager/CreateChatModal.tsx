@@ -30,18 +30,21 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({ isOpen, setOpen, setC
         participantsEmails: selectedUsers.map((u) => u.email),
       };
       const newChat = await createChat(chatInfo);
+      if (newChat.success){
+        setChats((prev) => [...prev, newChat?.data as Chat]);
+      } else if (newChat.error == "Este Chat já existe!"){
+        notification.warning({
+          message: "Couldn't create Chat",
+          description: `This Chat Already Exists!`,
+          placement: "topRight",
+          pauseOnHover: true,
+        });
+      }
       setLoading(false);
       setOpen(false);
       setSelectedUsers([]);
       setGroupName("");
-      setChats((prev) => [...prev, newChat?.data as Chat]);
     } catch (e) {
-      notification.info({
-        message: "New Chat Created",
-        description: `${msg.chatDTO.name} wants to Talk to you!`,
-        placement: "topRight",
-        pauseOnHover: true,
-      });
       setLoading(false);
     }
   };

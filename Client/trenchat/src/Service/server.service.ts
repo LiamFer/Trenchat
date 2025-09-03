@@ -75,6 +75,13 @@ export async function createChat(chatInfos: object) : Promise<APIResponse>{
     const response = await serverApi.post(`/chat`, chatInfos);
     return { success: true, data: response.data };
   } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || "Unknown Error";
+      if (status == 409){
+        return { success: false, error: message }
+      }
+    }
     return defaultFallback(error);
   }
 }
@@ -103,14 +110,6 @@ export async function uploadPicture(file: File) : Promise<APIResponse>{
     );
     return { success: true, data: response.data };
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const message = error.response?.data?.message || "Unknown Error";
-      { success: false, error: "Unexpected Error." }
-      if (status == 409){
-        console.log("Erro de CHat em duplicidade")
-      }
-    }
     return defaultFallback(error);
   }
 }
