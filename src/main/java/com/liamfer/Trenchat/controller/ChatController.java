@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -31,8 +32,10 @@ public class ChatController {
 
     // --- WebSocket ---
     @MessageMapping("/chatroom")
-    public void sendToRoom(ChatMessage message) {
-        messagingTemplate.convertAndSend("/topic/" + message.room(), message);
+    public void sendToRoom(ChatMessage message, Principal principal) {
+        String email = principal.getName();
+        System.out.println(email);
+        chatService.sendMessage(message,email);
     }
 
     @MessageMapping("/notifications")

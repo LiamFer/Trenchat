@@ -24,6 +24,7 @@ public class MessageEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @ManyToOne
     @JoinColumn(name = "chat_id")
     private ChatEntity chat;
@@ -41,4 +42,10 @@ public class MessageEntity {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    public MessageEntity(ChatEntity chat, UserEntity sender, String content) {
+        this.chat = chat;
+        this.sender = sender;
+        this.content = content;
+    }
 }

@@ -1,12 +1,15 @@
 package com.liamfer.Trenchat.service;
 
+import com.liamfer.Trenchat.dto.chat.ChatMessage;
 import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
 import com.liamfer.Trenchat.dto.chat.ChatDTO;
 import com.liamfer.Trenchat.dto.chat.SocketCreatedChatDTO;
 import com.liamfer.Trenchat.entity.ChatEntity;
+import com.liamfer.Trenchat.entity.MessageEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
 import com.liamfer.Trenchat.exceptions.ChatAlreadyExists;
 import com.liamfer.Trenchat.repository.ChatRepository;
+import com.liamfer.Trenchat.repository.MessageRepository;
 import com.liamfer.Trenchat.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
@@ -24,13 +27,15 @@ import java.util.stream.Collectors;
 public class ChatService {
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
+    private final MessageRepository messageRepository;
     private final ModelMapper modelMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final String groupPicture;
 
-    public ChatService(ChatRepository chatRepository, UserRepository userRepository, ModelMapper modelMapper, SimpMessagingTemplate messagingTemplate) {
+    public ChatService(ChatRepository chatRepository, UserRepository userRepository, MessageRepository messageRepository, ModelMapper modelMapper, SimpMessagingTemplate messagingTemplate) {
         this.chatRepository = chatRepository;
         this.userRepository = userRepository;
+        this.messageRepository = messageRepository;
         this.modelMapper = modelMapper;
         this.messagingTemplate = messagingTemplate;
         this.groupPicture = "https://cdn-icons-png.flaticon.com/512/6387/6387947.png";
@@ -82,6 +87,13 @@ public class ChatService {
         return chatDTO;
     }
 
+    public void sendMessage(ChatMessage message,String email){
+        UserEntity user = findUserByEmail(email);
+        ChatEntity chat = findChatById(message.room());
+        messageRepository.save(new MessageEntity(chat,user,message.content()));
+        messagingTemplate.convertAndSend("/topic/" + message.room(), message);
+    }
+
     public List<ChatDTO> fetchUserChats(UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
         return chatRepository.findAllByParticipantsId(user.getId()).stream().map(chat -> {
@@ -128,6 +140,14 @@ public class ChatService {
             return user.get();
         }
         throw new EntityNotFoundException("Usuário não Encontrado");
+    }
+
+    private ChatEntity findChatById(String id) {
+        Optional<ChatEntity> chat = chatRepository.findById(id);
+        if (chat.isPresent()) {
+            return chat.get();
+        }
+        throw new EntityNotFoundException("Chat não Encontrado");
     }
 
 }
