@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Input, Avatar, theme } from "antd";
 import "../../Styles/ChatWindow.css";
 import { Client } from "@stomp/stompjs";
@@ -24,15 +24,51 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const stompClient = useRef<Client | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const user = useUser();
+
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const messageListRef = useRef<HTMLDivElement | null>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const oldScrollHeightRef = useRef<number>(0);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    const fetchOlderMessages = async () => {
+        if (isLoadingMore || !hasMore) return;
+
+        setIsLoadingMore(true);
+        console.log("Buscando mensagens antigas...");
+
+        if (messageListRef.current) {
+            oldScrollHeightRef.current = messageListRef.current.scrollHeight;
+        }
+
+        // Simulação de chamada de API que você implementará
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        const olderMessages: Message[] = Array.from({ length: 15 }).map((_, i) => ({
+            type: Math.random() > 0.5 ? "sent" : "received",
+            text: `(Mensagem Antiga) ${messages.length + i}`,
+            user: Math.random() > 0.5 ? user?.name : activeChat?.name,
+            picture: Math.random() > 0.5 ? user?.picture : activeChat?.picture,
+            time: new Date(
+                Date.now() - (messages.length + i + 1) * 60000
+            ).toLocaleTimeString(),
+        }));
+
+        setMessages((prevMessages) => [...olderMessages, ...prevMessages]);
+
+        // Em uma implementação real, você atualizaria hasMore com base na resposta da API
+        // Ex: setHasMore(olderMessages.length > 0);
+
+        setIsLoadingMore(false);
+    };
+
     useEffect(() => {
-        if (activeChat) {
+        if (activeChat && user) {
             stompClient.current = createStompClient(activeChat.id, (msg) => {
                 const newMsg: Message = {
                     type: msg.sender === user?.name ? "sent" : "received",
@@ -41,7 +77,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     picture: msg.picture,
                     time: new Date().toLocaleTimeString(),
                 };
-                if (msg.sender != user?.name) {
+                if (msg.sender !== user.name) {
                     setMessages((prev) => [...prev, newMsg]);
                 }
             });
@@ -55,12 +91,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
 
     useEffect(() => {
         setMessages([]);
+        setHasMore(true);
     }, [activeChat]);
 
+    const lastMessageRef = useRef<Message>();
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        const currentLastMessage = messages[messages.length - 1];
+        // Apenas rola para baixo se uma nova mensagem foi adicionada ao final
+        if (
+            messages.length > 0 &&
+            currentLastMessage !== lastMessageRef.current &&
+            !isLoadingMore
+        ) {
+            scrollToBottom();
+        }
+        lastMessageRef.current = currentLastMessage;
+    }, [messages, isLoadingMore]);
 
+    useLayoutEffect(() => {
+        if (isLoadingMore && messageListRef.current) {
+            messageListRef.current.scrollTop = messageListRef.current.scrollHeight - oldScrollHeightRef.current;
+        }
+    }, [messages, isLoadingMore]);
     const onSend = (value: string) => {
         if (!stompClient.current || !user || value.length == 0) return;
         const payload = {
@@ -119,8 +171,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             </div>
             <div
                 className="messages-list"
+                ref={messageListRef}
+                onScroll={() => {
+                    if (messageListRef.current?.scrollTop === 0) {
+                        fetchOlderMessages();
+                    }
+                }}
                 style={{ backgroundColor: token.colorBgLayout }}
             >
+                {isLoadingMore && <div style={{ textAlign: 'center', padding: '10px' }}>Carregando mais...</div>}
                 {messages.map((message, index) => (
                     <div key={index} className={`message-row ${message.type}`}>
                         {message.type === "received" && (
