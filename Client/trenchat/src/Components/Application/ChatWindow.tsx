@@ -135,7 +135,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             text: value,
             user: user.name,
             picture: user.picture,
-            time: new Date().toLocaleTimeString(),
+            time: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, sentMessage]);
         setInputValue("");

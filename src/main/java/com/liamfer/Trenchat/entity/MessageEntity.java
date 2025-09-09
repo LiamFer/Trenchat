@@ -33,6 +33,7 @@ public class MessageEntity {
     @JoinColumn(name = "sender_id")
     private UserEntity sender;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
 
 //    private Set<UserEntity> seenBy = new HashSet<>();
