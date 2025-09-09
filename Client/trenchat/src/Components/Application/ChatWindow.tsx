@@ -30,6 +30,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const messageListRef = useRef<HTMLDivElement | null>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [initialLoading, setinitialLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const oldScrollHeightRef = useRef<number>(0);
@@ -60,10 +61,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             setPage(0);
 
             const initialFetch = async () => {
+                setinitialLoading(true)
                 const initialMessages = (await fetchChatMessages(activeChat.id, 0)).data;
                 setMessages(initialMessages.content);
                 setHasMore(initialMessages.last !== true);
                 setPage(1);
+                setinitialLoading(false)
             };
             initialFetch();
 
@@ -138,7 +141,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         setInputValue("");
     };
 
-    if (!activeChat) return <Loading />;
+    if (!activeChat || initialLoading) return <Loading />;
 
     return (
         <div
