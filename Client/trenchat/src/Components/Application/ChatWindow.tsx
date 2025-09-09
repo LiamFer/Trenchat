@@ -141,6 +141,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         setInputValue("");
     };
 
+    const formatMessageTime = (isoString: string) => {
+        const messageDate = new Date(isoString);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        const isToday = messageDate.getDate() === today.getDate() &&
+            messageDate.getMonth() === today.getMonth() &&
+            messageDate.getFullYear() === today.getFullYear();
+
+        const isYesterday = messageDate.getDate() === yesterday.getDate() &&
+            messageDate.getMonth() === yesterday.getMonth() &&
+            messageDate.getFullYear() === yesterday.getFullYear();
+
+        if (isToday) {
+            return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (isYesterday) {
+            return `Ontem, ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return messageDate.toLocaleDateString('pt-BR', options);
+        }
+    };
+
+
     if (!activeChat || initialLoading) return <Loading />;
 
     return (
@@ -202,7 +227,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                 className="message-time"
                                 style={{ color: token.colorTextSecondary }}
                             >
-                                {message.time}
+                                {formatMessageTime(message.time)}
                             </span>
                         </div>
                         {message.type === "sent" && (

@@ -62,7 +62,7 @@ public class ChatController {
 
     @GetMapping("/messages/{chatId}")
     public ResponseEntity<Page<MessageDTO>> fetchChatMessages(@PathVariable String chatId,
-                                                              Pageable pageable,
+                                                              @PageableDefault(sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
                                                               @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.getChatMessages(chatId,pageable,user));
     }
