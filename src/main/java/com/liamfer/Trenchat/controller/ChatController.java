@@ -3,8 +3,13 @@ package com.liamfer.Trenchat.controller;
 import com.liamfer.Trenchat.dto.chat.ChatMessage;
 import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
 import com.liamfer.Trenchat.dto.chat.ChatDTO;
+import com.liamfer.Trenchat.dto.chat.MessageDTO;
 import com.liamfer.Trenchat.service.ChatService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -13,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -52,5 +58,12 @@ public class ChatController {
     @GetMapping("/chat")
     public ResponseEntity<List<ChatDTO>> fetchChats(@AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.fetchUserChats(user));
+    }
+
+    @GetMapping("/messages/{chatId}")
+    public ResponseEntity<Page<MessageDTO>> fetchChatMessages(@PathVariable String chatId,
+                                                              Pageable pageable,
+                                                              @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(chatService.getChatMessages(chatId,pageable,user));
     }
 }

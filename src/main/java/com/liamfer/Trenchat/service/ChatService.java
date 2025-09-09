@@ -1,9 +1,6 @@
 package com.liamfer.Trenchat.service;
 
-import com.liamfer.Trenchat.dto.chat.ChatMessage;
-import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
-import com.liamfer.Trenchat.dto.chat.ChatDTO;
-import com.liamfer.Trenchat.dto.chat.SocketCreatedChatDTO;
+import com.liamfer.Trenchat.dto.chat.*;
 import com.liamfer.Trenchat.entity.ChatEntity;
 import com.liamfer.Trenchat.entity.MessageEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
@@ -13,6 +10,8 @@ import com.liamfer.Trenchat.repository.MessageRepository;
 import com.liamfer.Trenchat.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -110,6 +109,13 @@ public class ChatService {
             chatDTO.setPicture(other.getPicture());
             return chatDTO;
         }).toList();
+    }
+
+    public Page<MessageDTO> getChatMessages(String chatId, Pageable pageable, UserDetails userDetails){
+        return messageRepository.findAllByChatId(chatId,pageable).map(message -> {
+            String type = message.getSender().getEmail().equals(userDetails.getUsername()) ? "sent" : "received";
+            return new MessageDTO(type, message.getContent(), message.getSender().getName(), message.getSender().getPicture(), message.getCreatedAt().toString());
+        });
     }
 
     public List<String> getParticipantsIds(List<String> participantsEmails) {
