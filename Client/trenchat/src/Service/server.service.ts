@@ -95,6 +95,20 @@ export async function fetchUserChats() : Promise<APIResponse>{
   }
 }
 
+export async function fetchChatMessages(chatId:string,page:number) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.get(`/messages/${chatId}`,{
+      params: {
+        page: page,
+        size:500,
+      }
+    });
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
 export async function uploadPicture(file: File) : Promise<APIResponse>{
   try {
     const formData = new FormData();

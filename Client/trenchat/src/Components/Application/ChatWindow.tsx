@@ -6,6 +6,7 @@ import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
 import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
+import { fetchChatMessages } from "../../Service/server.service";
 
 interface Message {
     type: "sent" | "received";
@@ -30,6 +31,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const messageListRef = useRef<HTMLDivElement | null>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(0);
     const oldScrollHeightRef = useRef<number>(0);
 
     const scrollToBottom = () => {
@@ -40,35 +42,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         if (isLoadingMore || !hasMore) return;
 
         setIsLoadingMore(true);
-        console.log("Buscando mensagens antigas...");
 
         if (messageListRef.current) {
             oldScrollHeightRef.current = messageListRef.current.scrollHeight;
         }
 
-        // Simulação de chamada de API que você implementará
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const olderMessages = (await fetchChatMessages(activeChat.id, page)).data
 
-        const olderMessages: Message[] = Array.from({ length: 15 }).map((_, i) => ({
-            type: Math.random() > 0.5 ? "sent" : "received",
-            text: `(Mensagem Antiga) ${messages.length + i}`,
-            user: Math.random() > 0.5 ? user?.name : activeChat?.name,
-            picture: Math.random() > 0.5 ? user?.picture : activeChat?.picture,
-            time: new Date(
-                Date.now() - (messages.length + i + 1) * 60000
-            ).toLocaleTimeString(),
-        }));
-
-        setMessages((prevMessages) => [...olderMessages, ...prevMessages]);
-
-        // Em uma implementação real, você atualizaria hasMore com base na resposta da API
-        // Ex: setHasMore(olderMessages.length > 0);
-
+        setMessages((prevMessages) => [...olderMessages.content, ...prevMessages]);
+        setHasMore(olderMessages.last !== false)
+        setPage((prevPage) => prevPage + 1);
         setIsLoadingMore(false);
     };
 
     useEffect(() => {
         if (activeChat && user) {
+            setPage(0);
+
+            const initialFetch = async () => {
+                const initialMessages = (await fetchChatMessages(activeChat.id, 0)).data;
+                setMessages(initialMessages.content);
+                setHasMore(initialMessages.last !== true);
+                setPage(1);
+            };
+            initialFetch();
+
             stompClient.current = createStompClient(activeChat.id, (msg) => {
                 const newMsg: Message = {
                     type: msg.sender === user?.name ? "sent" : "received",
@@ -81,6 +79,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     setMessages((prev) => [...prev, newMsg]);
                 }
             });
+        
         }
         return () => {
             if (stompClient.current) {
