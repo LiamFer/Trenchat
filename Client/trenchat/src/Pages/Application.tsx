@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import useUser from "../Hooks/useUser";
 import { useNavigate } from "react-router-dom";
-import { Layout, App} from "antd";
+import { Layout, App } from "antd";
 import Sidebar from "../Components/Application/Sidebar";
 import ChatWindow from "../Components/Application/ChatWindow";
 import RightSidebar from "../Components/Application/RightSidebar";
@@ -23,7 +23,7 @@ export default function Application() {
   const navigate = useNavigate();
   const { notification } = App.useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
 
   useEffect(() => {
     if (!user) {
@@ -65,12 +65,12 @@ export default function Application() {
       {!activeChat ? (
         <LandingPage isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
       ) : (
-        <>
+        <Layout>
           <Content className="chat-window-container">
             <ChatWindow activeChat={activeChat} />
           </Content>
           <RightSidebar activeChat={activeChat} />
-        </>
+        </Layout>
       )}
     </Layout>
   );
