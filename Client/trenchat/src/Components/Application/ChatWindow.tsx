@@ -8,6 +8,7 @@ import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
 import { fetchChatMessages } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
+import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
 
 interface Message {
     type: "sent" | "received";
@@ -31,13 +32,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const messageListRef = useRef<HTMLDivElement | null>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [initialLoading, setinitialLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const oldScrollHeightRef = useRef<number>(0);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView();
     };
 
     const fetchOlderMessages = async () => {
@@ -59,6 +61,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
 
     useEffect(() => {
         if (activeChat && user) {
+            setIsInitialLoad(true);
             setPage(0);
 
             const initialFetch = async () => {
@@ -77,7 +80,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     text: msg.content,
                     user: msg.sender,
                     picture: msg.picture,
-                    time: new Date().toLocaleTimeString(),
+                    time: new Date().toISOString(),
                 };
                 if (msg.sender !== user.name) {
                     setMessages((prev) => [...prev, newMsg]);
@@ -96,6 +99,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         setMessages([]);
         setHasMore(true);
     }, [activeChat]);
+
+    useEffect(() => {
+        if (messages.length > 0 && isInitialLoad) {
+            // Disable the initial load stagger after the first batch of messages has been rendered and animated.
+            const timer = setTimeout(() => {
+                setIsInitialLoad(false);
+            }, 1000); // A safe duration
+            return () => clearTimeout(timer);
+        }
+    }, [messages, isInitialLoad]);
 
     const lastMessageRef = useRef<Message>();
     useEffect(() => {
@@ -210,32 +223,45 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 >
                     {isLoadingMore && <div style={{ textAlign: 'center', padding: '10px' }}>Carregando mais...</div>}
                     {messages.map((message, index) => (
-                        <div key={index} className={`message-row ${message.type}`}>
-                            {message.type === "received" && (
-                                <Avatar src={message.picture} className="message-avatar" />
-                            )}
-                            <div
-                                className={`message-bubble ${message.type}`}
-                                style={{
-                                    backgroundColor:
-                                        message.type === "sent"
-                                            ? token.colorPrimary
-                                            : token.colorFillQuaternary,
-                                    color: message.type === "sent" ? "#fff" : token.colorText,
-                                }}
-                            >
-                                <p>{message.text}</p>
-                                <span
-                                    className="message-time"
-                                    style={{ color: token.colorTextSecondary }}
+                        <AnimatedContent
+                            key={index}
+                            scroller={messageListRef.current} // Keep this to specify the scroll container
+                            distance={50}
+                            direction="vertical"
+                            duration={0.5}
+                            ease="power3.out"
+                            initialOpacity={0}
+                            animateOpacity
+                            threshold={0.1}
+                            delay={isInitialLoad ? index * 0.05 : 0}
+                        >
+                            <div className={`message-row ${message.type}`}>
+                                {message.type === "received" && (
+                                    <Avatar src={message.picture} className="message-avatar" />
+                                )}
+                                <div
+                                    className={`message-bubble ${message.type}`}
+                                    style={{
+                                        backgroundColor:
+                                            message.type === "sent"
+                                                ? token.colorPrimary
+                                                : token.colorFillQuaternary,
+                                        color: message.type === "sent" ? "#fff" : token.colorText,
+                                    }}
                                 >
-                                    {formatMessageTime(message.time)}
-                                </span>
+                                    <p>{message.text}</p>
+                                    <span
+                                        className="message-time"
+                                        style={{ color: token.colorTextSecondary }}
+                                    >
+                                        {formatMessageTime(message.time)}
+                                    </span>
+                                </div>
+                                {message.type === "sent" && (
+                                    <Avatar src={user?.picture} className="message-avatar" />
+                                )}
                             </div>
-                            {message.type === "sent" && (
-                                <Avatar src={user?.picture} className="message-avatar" />
-                            )}
-                        </div>
+                        </AnimatedContent>
                     ))}
                     <div ref={messagesEndRef} />
                 </div>
