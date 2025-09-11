@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import useUser from "../Hooks/useUser";
 import { useNavigate } from "react-router-dom";
-import { Layout, App } from "antd";
+import { Layout, App} from "antd";
 import Sidebar from "../Components/Application/Sidebar";
 import ChatWindow from "../Components/Application/ChatWindow";
 import RightSidebar from "../Components/Application/RightSidebar";
@@ -10,6 +10,8 @@ import { Client } from "@stomp/stompjs";
 import { createStompClient } from "../API/socket";
 import type { Chat, SocketCreatedChat } from "../types/SocketCreatedChat";
 import { fetchUserChats } from "../Service/server.service";
+import LandingPage from "../Components/LandingPage/LandingPage";
+
 
 const { Content } = Layout;
 
@@ -20,6 +22,8 @@ export default function Application() {
   const user = useUser();
   const navigate = useNavigate();
   const { notification } = App.useApp();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
 
   useEffect(() => {
     if (!user) {
@@ -57,8 +61,10 @@ export default function Application() {
 
   return (
     <Layout className="app-layout">
-      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat} />
-      {activeChat && (
+      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat} isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      {!activeChat ? (
+        <LandingPage isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      ) : (
         <>
           <Content className="chat-window-container">
             <ChatWindow activeChat={activeChat} />

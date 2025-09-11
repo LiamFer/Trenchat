@@ -17,19 +17,21 @@ interface SidebarProps {
   chats: Chat[];
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
   setActiveChat: React.Dispatch<React.SetStateAction<Chat | null>>;
+  isModalOpen: boolean;
+  setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   chats,
   setChats,
   setActiveChat,
+  isModalOpen,
+  setIsModalOpen,
 }) => {
   const user = useUser();
   const { token } = theme.useToken();
   const [open, setOpen] = useState(false);
-
   const [collapsed, setCollapsed] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const showModal = () => {
     setIsModalOpen(true);
