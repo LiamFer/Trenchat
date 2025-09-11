@@ -7,6 +7,7 @@ import { createStompClient } from "../../API/socket";
 import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
 import { fetchChatMessages } from "../../Service/server.service";
+import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 
 interface Message {
     type: "sent" | "received";
@@ -82,7 +83,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     setMessages((prev) => [...prev, newMsg]);
                 }
             });
-        
+
         }
         return () => {
             if (stompClient.current) {
@@ -196,47 +197,60 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     </div>
                 </div>
             </div>
-            <div
-                className="messages-list"
-                ref={messageListRef}
-                onScroll={() => {
-                    if (messageListRef.current?.scrollTop === 0) {
-                        fetchOlderMessages();
-                    }
-                }}
-                style={{ backgroundColor: token.colorBgLayout }}
-            >
-                {isLoadingMore && <div style={{ textAlign: 'center', padding: '10px' }}>Carregando mais...</div>}
-                {messages.map((message, index) => (
-                    <div key={index} className={`message-row ${message.type}`}>
-                        {message.type === "received" && (
-                            <Avatar src={message.picture} className="message-avatar" />
-                        )}
-                        <div
-                            className={`message-bubble ${message.type}`}
-                            style={{
-                                backgroundColor:
-                                    message.type === "sent"
-                                        ? token.colorPrimary
-                                        : token.colorFillQuaternary,
-                                color: message.type === "sent" ? "#fff" : token.colorText,
-                            }}
-                        >
-                            <p>{message.text}</p>
-                            <span
-                                className="message-time"
-                                style={{ color: token.colorTextSecondary }}
+            <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                <div
+                    className="messages-list"
+                    ref={messageListRef}
+                    onScroll={() => {
+                        if (messageListRef.current?.scrollTop === 0) {
+                            fetchOlderMessages();
+                        }
+                    }}
+                    style={{ backgroundColor: token.colorBgLayout, height: '100%', overflowY: 'auto' }}
+                >
+                    {isLoadingMore && <div style={{ textAlign: 'center', padding: '10px' }}>Carregando mais...</div>}
+                    {messages.map((message, index) => (
+                        <div key={index} className={`message-row ${message.type}`}>
+                            {message.type === "received" && (
+                                <Avatar src={message.picture} className="message-avatar" />
+                            )}
+                            <div
+                                className={`message-bubble ${message.type}`}
+                                style={{
+                                    backgroundColor:
+                                        message.type === "sent"
+                                            ? token.colorPrimary
+                                            : token.colorFillQuaternary,
+                                    color: message.type === "sent" ? "#fff" : token.colorText,
+                                }}
                             >
-                                {formatMessageTime(message.time)}
-                            </span>
+                                <p>{message.text}</p>
+                                <span
+                                    className="message-time"
+                                    style={{ color: token.colorTextSecondary }}
+                                >
+                                    {formatMessageTime(message.time)}
+                                </span>
+                            </div>
+                            {message.type === "sent" && (
+                                <Avatar src={user?.picture} className="message-avatar" />
+                            )}
                         </div>
-                        {message.type === "sent" && (
-                            <Avatar src={user?.picture} className="message-avatar" />
-                        )}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
+                    ))}
+                    <div ref={messagesEndRef} />
+                </div>
+                <GradualBlur
+                    target="parent"
+                    position="bottom"
+                    height="3rem"
+                    strength={2}
+                    divCount={5}
+                    curve="bezier"
+                    exponential={true}
+                    opacity={1}
+                />
             </div>
+
             <div
                 className="chat-input-area"
                 style={{

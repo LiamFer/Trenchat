@@ -16,7 +16,7 @@ const { Content } = Layout;
 export default function Application() {
   const stompClient = useRef<Client | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
-  const [activeChat,setActiveChat] = useState<Chat | null>(null);
+  const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const user = useUser();
   const navigate = useNavigate();
   const { notification } = App.useApp();
@@ -57,13 +57,15 @@ export default function Application() {
 
   return (
     <Layout className="app-layout">
-      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat}/>
-
-      <Content className="chat-window-container">
-        <ChatWindow activeChat={activeChat}/>
-      </Content>
-
-      <RightSidebar />
+      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat} />
+      {activeChat && (
+        <>
+          <Content className="chat-window-container">
+            <ChatWindow activeChat={activeChat} />
+          </Content>
+          <RightSidebar activeChat={activeChat} />
+        </>
+      )}
     </Layout>
   );
 }
