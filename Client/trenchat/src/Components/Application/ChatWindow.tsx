@@ -9,7 +9,7 @@ import Loading from "../Loading/Loading";
 import { fetchChatMessages, sendImage } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
-import { PaperClipOutlined, SendOutlined } from "@ant-design/icons";
+import { PaperClipOutlined, SendOutlined, CloseOutlined } from "@ant-design/icons";
 import ImageUploadOverlay from "../ReactBits/ImageUploadOverlay";
 
 interface Message {
@@ -387,11 +387,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 />
             </div>
 
+            {previewImage && (
+                <div className="image-preview-container" style={{ background: token.colorBgContainer, borderTop: `1px solid ${token.colorBorder}` }}>
+                    <div className="image-preview-wrapper">
+                        <img src={previewImage} alt="Preview" className="image-preview-thumb" />
+                        <Button
+                            shape="circle"
+                            type="text"
+                            icon={<CloseOutlined />}
+                            onClick={() => { setPreviewImage(null); setFileToSend(null); }}
+                            className="image-preview-close-btn"
+                            aria-label="Remover imagem"
+                        />
+                    </div>
+                </div>
+            )}
+
             <div
                 className="chat-input-area"
                 style={{
                     backgroundColor: token.colorBgContainer,
-                    borderTop: `1px solid ${token.colorBorder}`,
+                    borderTop: previewImage ? 'none' : `1px solid ${token.colorBorder}`,
                 }}
             >
                 <input
@@ -437,21 +453,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     disabled={(!inputValue.trim() && !fileToSend) || isUploading}
                 />
             </div>
-            <Modal
-                title="Enviar Imagem"
-                open={!!previewImage}
-                onCancel={() => { setPreviewImage(null); setFileToSend(null); }}
-                footer={[
-                    <Button key="back" onClick={() => { setPreviewImage(null); setFileToSend(null); }}>
-                        Cancelar
-                    </Button>,
-                    <Button key="submit" type="primary" loading={isUploading} onClick={() => onSend('')}>
-                        {isUploading ? 'Enviando...' : 'Enviar'}
-                    </Button>,
-                ]}
-            >
-                {previewImage && <img alt="preview" style={{ width: '100%' }} src={previewImage} />}
-            </Modal>
         </div>
     );
 };
