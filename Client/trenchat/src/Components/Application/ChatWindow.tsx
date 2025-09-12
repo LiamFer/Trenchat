@@ -9,7 +9,7 @@ import Loading from "../Loading/Loading";
 import { fetchChatMessages, sendImage } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
-import { PaperClipOutlined } from "@ant-design/icons";
+import { PaperClipOutlined, SendOutlined } from "@ant-design/icons";
 import ImageUploadOverlay from "../ReactBits/ImageUploadOverlay";
 
 interface Message {
@@ -402,19 +402,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     }}
                 />
                 <Button
+                    aria-label="Anexar imagem"
                     icon={<PaperClipOutlined />}
                     type="text"
+                    shape="circle"
                     onClick={() => fileInputRef.current?.click()}
                 />
-                <Input
-                    placeholder="Enter your message here"
+                <Input.TextArea
+                    placeholder="Digite sua mensagem..."
                     value={inputValue}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setInputValue(e.target.value)
                     }
-                    onPressEnter={() => onSend(inputValue)}
+                    onPressEnter={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                        if (!e.shiftKey && !isUploading) {
+                            e.preventDefault();
+                            onSend(inputValue);
+                        }
+                    }}
+                    autoSize={{ minRows: 1, maxRows: 4 }}
+                    className="chat-textarea"
                 />
-                <Button type="primary" onClick={() => onSend(inputValue)}>Send</Button>
+                <Button
+                    aria-label="Enviar mensagem"
+                    type="primary"
+                    shape="circle"
+                    icon={<SendOutlined />}
+                    onClick={() => onSend(inputValue)}
+                    disabled={(!inputValue.trim() && !fileToSend) || isUploading}
+                />
             </div>
             <Modal
                 title="Enviar Imagem"

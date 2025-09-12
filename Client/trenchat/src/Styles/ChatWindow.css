@@ -88,15 +88,21 @@
   border-top: 1px solid #e8e8e8;
   background-color: #f7f8f9;
   align-items: center;
+  gap: 8px; /* Adiciona um espaçamento entre os itens */
 }
 
-.chat-input-area .ant-input-affix-wrapper {
+.chat-textarea {
   border-radius: 20px;
+  padding: 8px 12px;
+  line-height: 1.5;
+  resize: none !important; /* Impede que o usuário redimensione manualmente */
 }
 
-.chat-input-area .send-button {
-  color: #1890ff;
-  margin-left: 16px;
-  cursor: pointer;
-  font-weight: bold;
+/* Remove a borda padrão do antd no foco para o nosso estilo prevalecer */
+.chat-input-area .ant-input-affix-wrapper:focus,
+.chat-input-area .ant-input-affix-wrapper-focused,
+.chat-textarea:focus,
+.chat-textarea:focus-within {
+  box-shadow: none !important;
+  border-color: #d9d9d9 !important;
 }
