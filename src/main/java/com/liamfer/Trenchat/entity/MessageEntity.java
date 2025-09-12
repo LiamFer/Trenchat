@@ -36,6 +36,8 @@ public class MessageEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    private String imageUrl;
+
 //    private Set<UserEntity> seenBy = new HashSet<>();
 
     @CreatedDate
@@ -44,9 +46,10 @@ public class MessageEntity {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public MessageEntity(ChatEntity chat, UserEntity sender, String content) {
+    public MessageEntity(ChatEntity chat, UserEntity sender, String content, String imageUrl) {
         this.chat = chat;
         this.sender = sender;
         this.content = content;
+        this.imageUrl = imageUrl;
     }
 }

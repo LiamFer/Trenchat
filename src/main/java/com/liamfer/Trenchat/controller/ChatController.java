@@ -4,6 +4,7 @@ import com.liamfer.Trenchat.dto.chat.ChatMessage;
 import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
 import com.liamfer.Trenchat.dto.chat.ChatDTO;
 import com.liamfer.Trenchat.dto.chat.MessageDTO;
+import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
 import com.liamfer.Trenchat.service.ChatService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -17,10 +18,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
@@ -40,7 +39,6 @@ public class ChatController {
     @MessageMapping("/chatroom")
     public void sendToRoom(ChatMessage message, Principal principal) {
         String email = principal.getName();
-        System.out.println(email);
         chatService.sendMessage(message,email);
     }
 
@@ -65,5 +63,11 @@ public class ChatController {
                                                               @PageableDefault(sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
                                                               @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.getChatMessages(chatId,pageable,user));
+    }
+
+    @PostMapping(value = "/chat/image", consumes = "multipart/form-data")
+    public ResponseEntity<CloudinaryPictureResponse> uploadImage(@RequestPart("image") MultipartFile image,
+                                                                       @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(chatService.uploadImage(image,user));
     }
 }

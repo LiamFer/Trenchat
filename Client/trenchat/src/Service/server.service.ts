@@ -127,3 +127,22 @@ export async function uploadPicture(file: File) : Promise<APIResponse>{
     return defaultFallback(error);
   }
 }
+
+export async function sendImage(file: File) : Promise<APIResponse>{
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await serverApi.post(
+      '/chat/image',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}

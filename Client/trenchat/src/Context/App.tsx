@@ -27,7 +27,8 @@ export const AppProvider = ({ children }: any) => {
   };
 
   useEffect(() => {
-    setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
+    // setDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setDarkMode(false);
   }, []);
 
   return (

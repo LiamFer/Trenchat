@@ -38,7 +38,7 @@ public class UserService {
 
     public CloudinaryPictureResponse uploadUserPicture(MultipartFile image,UserDetails userDetails){
         UserEntity user = findUserByEmail(userDetails.getUsername());
-        String picture = cloudinaryService.addImage(image,user.getId());
+        String picture = cloudinaryService.addImage(image,user.getId(),"/users");
         user.setPicture(picture);
         userRepository.save(user);
         return new CloudinaryPictureResponse(picture);

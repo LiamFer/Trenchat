@@ -1,6 +1,7 @@
 package com.liamfer.Trenchat.service;
 
 import com.liamfer.Trenchat.dto.chat.*;
+import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
 import com.liamfer.Trenchat.entity.ChatEntity;
 import com.liamfer.Trenchat.entity.MessageEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.UUID;
 
 import java.util.HashSet;
 import java.util.List;
@@ -26,14 +29,16 @@ import java.util.stream.Collectors;
 public class ChatService {
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
+    private final CloudinaryService cloudinaryService;
     private final MessageRepository messageRepository;
     private final ModelMapper modelMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final String groupPicture;
 
-    public ChatService(ChatRepository chatRepository, UserRepository userRepository, MessageRepository messageRepository, ModelMapper modelMapper, SimpMessagingTemplate messagingTemplate) {
+    public ChatService(ChatRepository chatRepository, UserRepository userRepository, CloudinaryService cloudinaryService, MessageRepository messageRepository, ModelMapper modelMapper, SimpMessagingTemplate messagingTemplate) {
         this.chatRepository = chatRepository;
         this.userRepository = userRepository;
+        this.cloudinaryService = cloudinaryService;
         this.messageRepository = messageRepository;
         this.modelMapper = modelMapper;
         this.messagingTemplate = messagingTemplate;
@@ -89,7 +94,7 @@ public class ChatService {
     public void sendMessage(ChatMessage message,String email){
         UserEntity user = findUserByEmail(email);
         ChatEntity chat = findChatById(message.room());
-        messageRepository.save(new MessageEntity(chat,user,message.content()));
+        messageRepository.save(new MessageEntity(chat,user,message.content(),message.imageUrl()));
         messagingTemplate.convertAndSend("/topic/" + message.room(), message);
     }
 
@@ -114,12 +119,17 @@ public class ChatService {
     public Page<MessageDTO> getChatMessages(String chatId, Pageable pageable, UserDetails userDetails){
         return messageRepository.findAllByChatId(chatId,pageable).map(message -> {
             String type = message.getSender().getEmail().equals(userDetails.getUsername()) ? "sent" : "received";
-            return new MessageDTO(type, message.getContent(), message.getSender().getName(), message.getSender().getPicture(), message.getCreatedAt().toString());
+            return new MessageDTO(type, message.getContent(),message.getImageUrl(), message.getSender().getName(), message.getSender().getPicture(), message.getCreatedAt().toString());
         });
     }
 
     public List<String> getParticipantsIds(List<String> participantsEmails) {
         return participantsEmails.stream().map(email -> findUserByEmail(email).getId()).toList();
+    }
+
+    public CloudinaryPictureResponse uploadImage(MultipartFile image, UserDetails userDetails){
+        String picture = cloudinaryService.addImage(image,UUID.randomUUID().toString(),"/images");
+        return new CloudinaryPictureResponse(picture);
     }
 
     private void checkIfChatCanBeCreated(UserEntity user,CreateChatDTO createChatDTO){

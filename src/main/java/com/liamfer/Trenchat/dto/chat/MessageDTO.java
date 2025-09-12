@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class MessageDTO {
     public String type;
     public String text;
+    public String imageUrl;
     public String user;
     public String picture;
     public String time;

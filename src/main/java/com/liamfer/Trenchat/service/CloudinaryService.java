@@ -16,9 +16,9 @@ public class CloudinaryService {
         this.cloudinary = cloudinary;
     }
 
-    public String addImage(MultipartFile file,String id){
+    public String addImage(MultipartFile file,String id,String folder){
         Map<String, Object> options = new HashMap<>();
-        options.put("folder", "Trenchat");
+        options.put("folder", "Trenchat"+folder);
         options.put("public_id", id);
         try {
             Map uploadResult = cloudinary.uploader().uploadLarge(file.getInputStream(), options);
