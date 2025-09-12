@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Layout, Card, Avatar, Divider, Button, theme, Tag, Skeleton } from "antd";
+import { Layout, Card, Avatar, Divider, Button, theme, Tag, Skeleton, Modal } from "antd";
 import {
   ThunderboltOutlined,
   SearchOutlined,
   SettingOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import "../../Styles/Sidebar.css";
 import useUser from "../../Hooks/useUser";
 import CreateChatModal from "./../ChatManager/CreateChatModal";
 import type { Chat } from "../../types/SocketCreatedChat";
 import ProfilePictureModal from "./ProfilePictureModal";
+import { serverApi } from "../../API/server";
 
 const { Sider } = Layout;
 
@@ -37,6 +39,28 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const showModal = () => {
     setIsModalOpen(true);
+  };
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: 'Você tem certeza que deseja sair?',
+      icon: <LogoutOutlined />,
+      content: 'Você será redirecionado para a tela de login.',
+      okText: 'Sair',
+      okType: 'danger',
+      cancelText: 'Cancelar',
+      onOk: async () => {
+        try {
+          // Chama o endpoint de logout no backend. O backend deve invalidar o cookie HttpOnly.
+          await serverApi.post('/auth/logout');
+        } catch (error) {
+          console.error("Falha na requisição de logout, deslogando no cliente.", error);
+        } finally {
+          // Força o redirecionamento para a página de login, limpando todo o estado da aplicação.
+          window.location.href = '/login';
+        }
+      },
+    });
   };
 
   return (
@@ -253,29 +277,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <Divider style={{ borderColor: token.colorBorder }} />
 
-          {/* Arquivadas */}
-          {/* <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            paddingTop: token.paddingSM,
-          }}
-        >
-          {!collapsed && <span>Archived Conversations</span>}
-          {!collapsed && (
-            <span
-              style={{
-                backgroundColor: token.colorFillTertiary,
-                fontSize: token.fontSizeSM,
-                marginLeft: token.marginXS,
-                padding: "2px 6px",
-                borderRadius: token.borderRadiusSM,
-              }}
-            >
-              7
-            </span>
-          )}
-        </div> */}
+          {/* Botão de Logout */}
+          <Button
+            type="text"
+            danger
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+            style={{
+              marginTop: 'auto', // Empurra o botão para o final
+            }}
+          >
+            {!collapsed && 'Logout'}
+          </Button>
         </div>
       </Sider>
       <CreateChatModal isOpen={isModalOpen} setOpen={setIsModalOpen} setChats={setChats} />
