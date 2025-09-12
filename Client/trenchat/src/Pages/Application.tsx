@@ -19,6 +19,7 @@ export default function Application() {
   const stompClient = useRef<Client | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
   const user = useUser();
   const navigate = useNavigate();
   const { notification } = App.useApp();
@@ -31,9 +32,14 @@ export default function Application() {
     } else {
       navigate("/");
       const fetchChats = async () => {
-        const response = await fetchUserChats();
-        if (response?.success) {
-          setChats(response?.data as Chat[]);
+        setIsLoadingChats(true);
+        try {
+          const response = await fetchUserChats();
+          if (response?.success) {
+            setChats(response?.data as Chat[]);
+          }
+        } finally {
+          setIsLoadingChats(false);
         }
       };
       fetchChats();
@@ -61,7 +67,7 @@ export default function Application() {
 
   return (
     <Layout className="app-layout">
-      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat} isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat} isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} isLoading={isLoadingChats} />
       {!activeChat ? (
         <LandingPage isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
       ) : (

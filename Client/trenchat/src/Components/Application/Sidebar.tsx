@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Card, Avatar, Divider, Button, theme, Tag } from "antd";
+import { Layout, Card, Avatar, Divider, Button, theme, Tag, Skeleton } from "antd";
 import {
   ThunderboltOutlined,
   SearchOutlined,
@@ -19,6 +19,7 @@ interface SidebarProps {
   setActiveChat: React.Dispatch<React.SetStateAction<Chat | null>>;
   isModalOpen: boolean;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isLoading: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -27,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   setActiveChat,
   isModalOpen,
   setIsModalOpen,
+  isLoading,
 }) => {
   const user = useUser();
   const { token } = theme.useToken();
@@ -131,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Button
                 type="text"
                 icon={<SettingOutlined />}
-                onClick={()=>setOpen(true)}
+                onClick={() => setOpen(true)}
                 style={{
                   position: "absolute",
                   top: 8,
@@ -185,61 +187,67 @@ const Sidebar: React.FC<SidebarProps> = ({
                 scrollbarWidth: "none",
               }}
             >
-              {chats.map((item, index) => (
-                <div
-                  key={index}
-                  className="conversation-item"
-                  style={{
-                    position: "relative",
-                    display: "flex",
-                    flexDirection: collapsed ? "column" : "row",
-                    alignItems: "center",
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    width: "100%",
-                    padding: collapsed ? "8px" : `${token.paddingXS}px`,
-                  }}
-                  onClick={() => setActiveChat(item)}
-                  onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    token.colorBgContainerDisabled)
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "transparent")
-                  }
-                >
-                  <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
-                  {!collapsed && (
-                    <>
-                      <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>
-                        <div style={{ fontWeight: token.fontWeightStrong }}>
-                          {item.name}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: token.fontSizeSM,
-                            color: token.colorTextSecondary,
-                          }}
-                        >
-                          {item.name === "Henry Boyd" ? "Active" : ""}
-                        </div>
+              {isLoading
+                ? Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      padding: collapsed ? "8px" : `${token.paddingXS}px`,
+                    }}
+                  >
+                    <Skeleton.Avatar active size={collapsed ? 40 : 48} shape="circle" />
+                    {!collapsed && (
+                      <div style={{ marginLeft: token.marginSM, width: "100%" }}>
+                        <Skeleton active title={false} paragraph={{ rows: 2, width: ['80%', '50%'] }} />
                       </div>
-                      {/* {item?.unread && (
-                        <span
-                          style={{
-                            backgroundColor: token.colorError,
-                            color: token.colorWhite,
-                            borderRadius: "50%",
-                            padding: "0 6px",
-                            fontSize: token.fontSizeSM,
-                          }}
-                        >
-                          {item.unread}
-                        </span>
-                      )} */}
-                    </>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))
+                : chats.map((item, index) => (
+                  <div
+                    key={index}
+                    className="conversation-item"
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: collapsed ? "column" : "row",
+                      alignItems: "center",
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      width: "100%",
+                      padding: collapsed ? "8px" : `${token.paddingXS}px`,
+                    }}
+                    onClick={() => setActiveChat(item)}
+                    onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      token.colorBgContainerDisabled)
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "transparent")
+                    }
+                  >
+                    <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
+                    {!collapsed && (
+                      <>
+                        <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>
+                          <div style={{ fontWeight: token.fontWeightStrong }}>
+                            {item.name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: token.fontSizeSM,
+                              color: token.colorTextSecondary,
+                            }}
+                          >
+                            {item.name === "Henry Boyd" ? "Active" : ""}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
 
