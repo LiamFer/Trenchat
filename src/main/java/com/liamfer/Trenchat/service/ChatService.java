@@ -42,7 +42,7 @@ public class ChatService {
         this.messageRepository = messageRepository;
         this.modelMapper = modelMapper;
         this.messagingTemplate = messagingTemplate;
-        this.groupPicture = "https://cdn-icons-png.flaticon.com/512/6387/6387947.png";
+        this.groupPicture = "https://play-lh.googleusercontent.com/G__EbWgggxFojII6xvmXf2Fq4_qGGH1jM2plkrO-TxJHyeLPMOzhmAhKgA27rf0Yxul0";
 
     }
 
