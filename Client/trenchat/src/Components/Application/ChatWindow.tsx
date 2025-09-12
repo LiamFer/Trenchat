@@ -47,6 +47,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const dragCounter = useRef(0);
 
+    const scrollToBottom = () => {
+        if (messageListRef.current) {
+            messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+        }
+    };
+
 
     const fetchOlderMessages = async () => {
         if (isLoadingMore || !hasMore) return;
@@ -122,9 +128,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         // processada antes que o scroll aconteça, evitando que a mensagem fique invisível.
         if (!isLoadingMore && messageListRef.current) {
             const timer = setTimeout(() => {
-                if (messageListRef.current) {
-                    messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-                }
+                scrollToBottom();
             }, 50); // Um debounce um pouco maior para garantir a estabilidade.
             return () => clearTimeout(timer);
         }
@@ -351,6 +355,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                             src={message.imageUrl}
                                             alt="imagem enviada"
                                             style={{ maxWidth: '250px', borderRadius: '8px' }}
+                                            onLoad={scrollToBottom} // Garante o scroll após a imagem carregar
                                         />
                                     ) : (
                                         <p>{message.text}</p>
