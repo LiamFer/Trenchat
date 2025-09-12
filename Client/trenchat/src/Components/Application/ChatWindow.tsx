@@ -151,6 +151,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            // Verifica se o item colado é uma imagem
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    handleImageSelected(file);
+                    e.preventDefault(); // Impede que o texto da imagem (se houver) seja colado
+                    break; // Para após encontrar a primeira imagem
+                }
+            }
+        }
+    };
+
     const onSend = async (value: string) => {
         if (!stompClient.current || !user) return;
 
@@ -351,12 +366,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                     }}
                                 >
                                     {message.imageUrl ? (
-                                        <Image
+                                        <div><Image
                                             src={message.imageUrl}
                                             alt="imagem enviada"
                                             style={{ maxWidth: '250px', borderRadius: '8px' }}
                                             onLoad={scrollToBottom} // Garante o scroll após a imagem carregar
                                         />
+                                            <p>{message.text}</p></div>
                                     ) : (
                                         <p>{message.text}</p>
                                     )}
@@ -442,6 +458,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                         }
                     }}
                     autoSize={{ minRows: 1, maxRows: 4 }}
+                    onPaste={handlePaste}
                     className="chat-textarea"
                 />
                 <Button
