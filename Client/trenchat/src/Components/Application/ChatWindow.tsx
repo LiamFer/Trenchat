@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Input, Avatar, theme, Modal, Button, Spin } from "antd";
+import { Input, Avatar, theme, Modal, Button, Spin, Image } from "antd";
 import "../../Styles/ChatWindow.css";
 import { Client } from "@stomp/stompjs";
 import useUser from "../../Hooks/useUser";
@@ -47,10 +47,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const dragCounter = useRef(0);
 
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView();
-    };
 
     const fetchOlderMessages = async () => {
         if (isLoadingMore || !hasMore) return;
@@ -120,18 +116,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         }
     }, [messages, isInitialLoad]);
 
-    const lastMessageRef = useRef<Message>();
     useEffect(() => {
-        const currentLastMessage = messages[messages.length - 1];
-        // Apenas rola para baixo se uma nova mensagem foi adicionada ao final
-        if (
-            messages.length > 0 &&
-            currentLastMessage !== lastMessageRef.current &&
-            !isLoadingMore
-        ) {
-            scrollToBottom();
+        // Rola para o final quando novas mensagens chegam ou no carregamento inicial.
+        // O timeout de 50ms garante que a animação da nova mensagem tenha tempo de ser
+        // processada antes que o scroll aconteça, evitando que a mensagem fique invisível.
+        if (!isLoadingMore && messageListRef.current) {
+            const timer = setTimeout(() => {
+                if (messageListRef.current) {
+                    messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+                }
+            }, 50); // Um debounce um pouco maior para garantir a estabilidade.
+            return () => clearTimeout(timer);
         }
-        lastMessageRef.current = currentLastMessage;
     }, [messages, isLoadingMore]);
 
     useLayoutEffect(() => {
@@ -351,7 +347,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                     }}
                                 >
                                     {message.imageUrl ? (
-                                        <img src={message.imageUrl} alt="imagem enviada" style={{ maxWidth: '250px', borderRadius: '8px', cursor: 'pointer' }} onClick={() => window.open(message.imageUrl, '_blank')} />
+                                        <Image
+                                            src={message.imageUrl}
+                                            alt="imagem enviada"
+                                            style={{ maxWidth: '250px', borderRadius: '8px' }}
+                                        />
                                     ) : (
                                         <p>{message.text}</p>
                                     )}
