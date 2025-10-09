@@ -6,7 +6,7 @@ import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
 import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
-import { fetchChatData, fetchChatMessages, sendImage } from "../../Service/server.service";
+import { fetchChatData, fetchChatMessages, sendImage, updateChatDetails } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
 import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined } from "@ant-design/icons";
@@ -91,8 +91,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             const initialFetch = async () => {
                 setinitialLoading(true)
                 const initialMessages = (await fetchChatMessages(activeChat.id, 0)).data;
-                const chatConfig: ChatConfig = (await fetchChatData(activeChat.id)).data;
-                setChatConfig(chatConfig);
+                setChatConfig((await fetchChatData(activeChat.id)).data);
                 setMessages(initialMessages.content);
                 setHasMore(initialMessages.last !== true);
                 setPage(1);
@@ -310,11 +309,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         setIsSettingsModalVisible(false);
     };
 
-    const handleSettingsSave = (details: { name: string; members: Member[] }) => {
-        // TODO: Implementar chamadas de API para salvar o nome do chat e a lista de membros
-        console.log("Salvando alterações:", details);
-        // Ex: await updateChatDetails(activeChat.id, { name: details.name, members: details.members.map(m => m.id) });
-        setIsSettingsModalVisible(false);
+    const handleSettingsSave = async (payload: { name: string; membersAdded: string[]; membersRemoved: string[] }): Promise<void> => {
+        try {
+            const response = await updateChatDetails(activeChat?.id, payload);
+            if (response?.success) {
+                setChatConfig(response.data as ChatConfig);
+                setIsSettingsModalVisible(false);
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar o chat:", error);
+            throw error;
+        }
     };
 
     if (!activeChat || initialLoading) return <Loading />;
@@ -515,7 +520,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     onClose={handleSettingsCancel}
                     onSave={handleSettingsSave}
                     chat={activeChat}
-                    chatConfig={chatConfig}
                 />
             )}
         </div>

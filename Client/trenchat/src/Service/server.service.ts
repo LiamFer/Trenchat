@@ -104,6 +104,15 @@ export async function fetchChatData(chatId:string) : Promise<APIResponse>{
   }
 }
 
+export async function updateChatDetails(chatId:string,payload:object) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.post(`/chat/${chatId}`,payload);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
 export async function fetchChatMessages(chatId:string,page:number) : Promise<APIResponse>{
   try {
     const response = await serverApi.get(`/messages/${chatId}`,{

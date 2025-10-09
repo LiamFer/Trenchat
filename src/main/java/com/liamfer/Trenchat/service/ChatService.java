@@ -2,7 +2,6 @@ package com.liamfer.Trenchat.service;
 
 import com.liamfer.Trenchat.dto.chat.*;
 import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
-import com.liamfer.Trenchat.dto.user.UserDTO;
 import com.liamfer.Trenchat.entity.ChatEntity;
 import com.liamfer.Trenchat.entity.MessageEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
@@ -15,6 +14,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -75,7 +75,7 @@ public class ChatService {
             ChatDTO dtoForOther = modelMapper.map(chatDTO, ChatDTO.class);
             dtoForOther.setName(createChatDTO.isGroup() ? createChatDTO.name() : user.getName());
             dtoForOther.setPicture(createChatDTO.isGroup() ? groupPicture : user.getPicture());
-            messagingTemplate.convertAndSend("/topic/" + id, new SocketCreatedChatDTO("new chat", dtoForOther));
+            messagingTemplate.convertAndSend("/topic/" + id, new SocketChatDTO("new chat", dtoForOther));
         });
 
         if(createChatDTO.isGroup()){
@@ -99,6 +99,8 @@ public class ChatService {
         messageRepository.save(new MessageEntity(chat,user,message.content(),message.imageUrl()));
         messagingTemplate.convertAndSend("/topic/" + message.room(), message);
     }
+
+
 
     public List<ChatDTO> fetchUserChats(UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
@@ -125,12 +127,56 @@ public class ChatService {
         });
     }
 
-    public ChatConfigDTO getChatData(String chatId){
-        Optional<ChatEntity> chat = chatRepository.findById(chatId);
-        if (chat.isEmpty()){
-            throw new EntityNotFoundException("Este chat não existe!");
+    public ChatConfigDTO updateChat(String chatId,ChatUpdateDTO chatUpdate,UserDetails userDetails){
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        ChatEntity chat = this.findChatById(chatId);
+
+        if(!chat.getOwner().equals(user)){
+            throw new AccessDeniedException("Você não tem permissão para atualizar este chat.");
         }
-        return this.modelMapper.map(chat.get(),ChatConfigDTO.class);
+
+        chat.setName(chatUpdate.getName());
+        ChatDTO chatDTO = modelMapper.map(chat,ChatDTO.class);
+        chatDTO.setPicture(groupPicture);
+        for (UserEntity member : chat.getParticipants()) {
+            messagingTemplate.convertAndSend(
+                    "/topic/" + member.getId(),
+                    new SocketChatDTO("chat updated", chatDTO)
+            );
+        }
+
+        if(!chatUpdate.getMembersAdded().isEmpty()){
+            Set<UserEntity> updated = new HashSet<>(chat.getParticipants());
+            Set<UserEntity> usersToAdd = chatUpdate.getMembersAdded().stream().map(this::findUserByEmail).collect(Collectors.toSet());
+            updated.addAll(usersToAdd);
+            chat.setParticipants(updated);
+
+            for(UserEntity newMember : usersToAdd){
+                messagingTemplate.convertAndSend("/topic/" + newMember.getId(), new SocketChatDTO("added to chat", chatDTO));
+            }
+        }
+        if (!chatUpdate.getMembersRemoved().isEmpty()) {
+            Set<UserEntity> updated = new HashSet<>(chat.getParticipants());
+            Set<UserEntity> usersToRemove = chatUpdate.getMembersRemoved().stream()
+                    .map(this::findUserByEmail)
+                    .collect(Collectors.toSet());
+            updated.removeAll(usersToRemove);
+            chat.setParticipants(updated);
+            for (UserEntity removedMember : usersToRemove) {
+                messagingTemplate.convertAndSend(
+                        "/topic/" + removedMember.getId(),
+                        new SocketChatDTO("removed from chat", chatDTO)
+                );
+            }
+        }
+
+        chatRepository.save(chat);
+        return this.getChatData(chatId);
+    }
+
+    public ChatConfigDTO getChatData(String chatId){
+        ChatEntity chat = this.findChatById(chatId);
+        return this.modelMapper.map(chat,ChatConfigDTO.class);
     }
 
     public List<String> getParticipantsIds(List<String> participantsEmails) {

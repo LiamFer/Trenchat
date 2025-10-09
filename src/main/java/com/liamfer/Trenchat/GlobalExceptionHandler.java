@@ -7,6 +7,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -60,6 +61,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<APIMessage<String>> EntityNotFoundExceptionHandler(EntityNotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new APIMessage<String>(HttpStatus.NOT_FOUND.value(),ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<APIMessage<String>> AccessDeniedExceptionHandler(AccessDeniedException ex){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new APIMessage<String>(HttpStatus.FORBIDDEN.value(),ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

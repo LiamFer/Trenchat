@@ -51,6 +51,11 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(chatService.createChat(createChatDTO,user));
     }
 
+    @PostMapping("/chat/{chatId}")
+    public ResponseEntity<ChatConfigDTO> createChat(@PathVariable String chatId,@RequestBody @Valid ChatUpdateDTO chatUpdateDTO, @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.status(HttpStatus.OK).body(chatService.updateChat(chatId,chatUpdateDTO,user));
+    }
+
     @GetMapping("/chat")
     public ResponseEntity<List<ChatDTO>> fetchChats(@AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.fetchUserChats(user));
