@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Card, Avatar, theme, Typography, Divider, Empty, Layout } from 'antd';
+import { Card, theme, Typography, Divider, Empty, Layout } from 'antd';
 import '../../Styles/RightSidebar.css';
 import type { Chat } from '../../types/SocketCreatedChat';
+import ClickableAvatar from './ClickableAvatar';
 
 const { Sider } = Layout;
 const { Title, Text } = Typography;
@@ -38,7 +39,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ activeChat }) => {
         >
             <div style={{ display: collapsed ? 'none' : 'block', height: '100%', overflowY: 'auto' }}>
                 <Card bordered={false} style={{ textAlign: 'center', background: 'transparent' }}>
-                    <Avatar size={80} src={activeChat.picture} style={{ marginBottom: token.margin }} />
+                    <ClickableAvatar size={80} src={activeChat.picture} style={{ marginBottom: token.margin }} />
                     <Title level={4} style={{ marginBottom: token.marginXXS }}>{activeChat.name}</Title>
                     <Text type="secondary">Online</Text>
                 </Card>

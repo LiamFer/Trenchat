@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Input, Avatar, theme, Button, Spin, Image } from "antd";
+import { Input, theme, Button, Spin, Image } from "antd";
 import "../../Styles/ChatWindow.css";
 import { Client } from "@stomp/stompjs";
 import useUser from "../../Hooks/useUser";
@@ -13,6 +13,7 @@ import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined } from 
 import ImageUploadOverlay from "../ReactBits/ImageUploadOverlay";
 import ChatSettingsModal from "./ChatSettingsModal";
 import type { ChatConfig } from "../../types/Chat";
+import ClickableAvatar from "./ClickableAvatar";
 
 interface Message {
     type: "sent" | "received";
@@ -341,7 +342,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     borderBottom: `1px solid ${token.colorBorder}`,
                 }}
             >
-                <Avatar src={activeChat?.picture} size={48} />
+                <ClickableAvatar src={activeChat?.picture} size={48} />
                 <div className="chat-header-info">
                     <div
                         className="chat-header-name"
@@ -396,7 +397,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                         >
                             <div className={`message-row ${message.type}`}>
                                 {message.type === "received" && (
-                                    <Avatar src={message.picture} className="message-avatar" />
+                                    <ClickableAvatar src={message.picture} className="message-avatar" />
                                 )}
                                 <div
                                     className={`message-bubble ${message.type}`}
@@ -427,7 +428,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                     </span>
                                 </div>
                                 {message.type === "sent" && (
-                                    <Avatar src={user?.picture} className="message-avatar" />
+                                    <ClickableAvatar src={user?.picture} className="message-avatar" />
                                 )}
                             </div>
                         </AnimatedContent>

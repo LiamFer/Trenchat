@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Card, Avatar, Divider, Button, theme, Tag, Skeleton, Modal } from "antd";
+import { Layout, Card, Divider, Button, theme, Tag, Skeleton, Modal } from "antd";
 import {
   ThunderboltOutlined,
   SearchOutlined,
@@ -11,6 +11,7 @@ import useUser from "../../Hooks/useUser";
 import CreateChatModal from "./../ChatManager/CreateChatModal";
 import type { Chat } from "../../types/SocketCreatedChat";
 import ProfilePictureModal from "./ProfilePictureModal";
+import ClickableAvatar from "./ClickableAvatar";
 import { serverApi } from "../../API/server";
 
 const { Sider } = Layout;
@@ -128,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               padding: token.paddingXS,
             }}
           >
-            <Avatar
+            <ClickableAvatar
               size={collapsed ? 40 : 64}
               src={user?.picture}
               style={{
@@ -252,7 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       (e.currentTarget.style.backgroundColor = "transparent")
                     }
                   >
-                    <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
+                    <ClickableAvatar size={collapsed ? 40 : 48} src={item?.picture} />
                     {!collapsed && (
                       <>
                         <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>
