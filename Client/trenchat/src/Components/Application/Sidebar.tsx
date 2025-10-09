@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Card, Divider, Button, theme, Tag, Skeleton, Modal } from "antd";
+import { Layout, Card, Divider, Button, theme, Tag, Skeleton, Modal, Avatar } from "antd";
 import {
   ThunderboltOutlined,
   SearchOutlined,
@@ -253,7 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       (e.currentTarget.style.backgroundColor = "transparent")
                     }
                   >
-                    <ClickableAvatar size={collapsed ? 40 : 48} src={item?.picture} />
+                    <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
                     {!collapsed && (
                       <>
                         <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>
