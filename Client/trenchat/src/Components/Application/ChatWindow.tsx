@@ -292,34 +292,47 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(6, 1fr)',
+                    alignContent: 'flex-start',
                     gap: '4px',
                     padding: '0 8px 8px 8px',
-                    maxHeight: '300px',
+                    height: '250px',
                     overflowY: 'auto',
                 }}
             >
-                {filteredEmojis.map((emoji, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => handleEmojiClick(emoji)}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            fontSize: '24px',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            borderRadius: '4px',
-                            transition: 'background-color 0.2s',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgElevated}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                        {emoji}
-                    </button>
-                ))}
+                {filteredEmojis.length > 0 ? (
+                    filteredEmojis.map((emoji, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => handleEmojiClick(emoji)}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                transition: 'background-color 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgElevated}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            {emoji}
+                        </button>
+                    ))
+                ) : (
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        textAlign: 'center',
+                        color: token.colorTextSecondary,
+                        paddingTop: '24px',
+                        userSelect: 'none'
+                    }}>
+                        Nenhum emoji encontrado
+                    </div>
+                )}
             </div>
         </div>
     );
