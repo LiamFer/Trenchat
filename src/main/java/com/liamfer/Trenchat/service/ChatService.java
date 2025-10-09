@@ -2,6 +2,7 @@ package com.liamfer.Trenchat.service;
 
 import com.liamfer.Trenchat.dto.chat.*;
 import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
+import com.liamfer.Trenchat.dto.user.UserDTO;
 import com.liamfer.Trenchat.entity.ChatEntity;
 import com.liamfer.Trenchat.entity.MessageEntity;
 import com.liamfer.Trenchat.entity.UserEntity;
@@ -49,6 +50,7 @@ public class ChatService {
     public ChatDTO createChat(CreateChatDTO createChatDTO, UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
         ChatEntity chat = new ChatEntity();
+        chat.setOwner(user);
 
         if (!createChatDTO.isGroup()){
             checkIfChatCanBeCreated(user,createChatDTO);
@@ -121,6 +123,14 @@ public class ChatService {
             String type = message.getSender().getEmail().equals(userDetails.getUsername()) ? "sent" : "received";
             return new MessageDTO(type, message.getContent(),message.getImageUrl(), message.getSender().getName(), message.getSender().getPicture(), message.getCreatedAt().toString());
         });
+    }
+
+    public ChatConfigDTO getChatData(String chatId){
+        Optional<ChatEntity> chat = chatRepository.findById(chatId);
+        if (chat.isEmpty()){
+            throw new EntityNotFoundException("Este chat não existe!");
+        }
+        return this.modelMapper.map(chat.get(),ChatConfigDTO.class);
     }
 
     public List<String> getParticipantsIds(List<String> participantsEmails) {

@@ -1,7 +1,7 @@
 package com.liamfer.Trenchat.controller;
 
 import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
-import com.liamfer.Trenchat.dto.user.SearchedUserDTO;
+import com.liamfer.Trenchat.dto.user.UserDTO;
 import com.liamfer.Trenchat.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +23,8 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<SearchedUserDTO>> searchUsers(@RequestParam(name = "email", defaultValue = "") String email,
-                                                             @AuthenticationPrincipal UserDetails user){
+    public ResponseEntity<List<UserDTO>> searchUsers(@RequestParam(name = "email", defaultValue = "") String email,
+                                                     @AuthenticationPrincipal UserDetails user){
         return ResponseEntity.ok(userService.searchUsers(email,user));
     }
 

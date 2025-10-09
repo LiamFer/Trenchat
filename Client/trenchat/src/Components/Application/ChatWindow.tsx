@@ -1,16 +1,18 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Input, Avatar, theme, Modal, Button, Spin, Image } from "antd";
+import { Input, Avatar, theme, Button, Spin, Image } from "antd";
 import "../../Styles/ChatWindow.css";
 import { Client } from "@stomp/stompjs";
 import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
 import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
-import { fetchChatMessages, sendImage } from "../../Service/server.service";
+import { fetchChatData, fetchChatMessages, sendImage } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
-import { PaperClipOutlined, SendOutlined, CloseOutlined } from "@ant-design/icons";
+import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined } from "@ant-design/icons";
 import ImageUploadOverlay from "../ReactBits/ImageUploadOverlay";
+import ChatSettingsModal from "./ChatSettingsModal";
+import type { ChatConfig } from "../../types/Chat";
 
 interface Message {
     type: "sent" | "received";
@@ -21,6 +23,12 @@ interface Message {
     time: string;
 }
 
+interface Member {
+    id: string;
+    name: string;
+    picture: string;
+}
+
 interface ChatWindowProps {
     activeChat: Chat | null;
 }
@@ -28,6 +36,7 @@ interface ChatWindowProps {
 const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const { token } = theme.useToken();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [chatConfig, setChatConfig] = useState<ChatConfig | null>(null);
     const [inputValue, setInputValue] = useState<string>("");
     const stompClient = useRef<Client | null>(null);
     const user = useUser();
@@ -45,6 +54,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const [fileToSend, setFileToSend] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    // Estados para o Modal de Configurações
+    const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
     const dragCounter = useRef(0);
 
     const scrollToBottom = () => {
@@ -79,6 +91,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             const initialFetch = async () => {
                 setinitialLoading(true)
                 const initialMessages = (await fetchChatMessages(activeChat.id, 0)).data;
+                const chatConfig: ChatConfig = (await fetchChatData(activeChat.id)).data;
+                setChatConfig(chatConfig);
                 setMessages(initialMessages.content);
                 setHasMore(initialMessages.last !== true);
                 setPage(1);
@@ -287,6 +301,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         }
     };
 
+    // Funções para o Modal de Configurações
+    const showSettingsModal = () => {
+        setIsSettingsModalVisible(true);
+    };
+
+    const handleSettingsCancel = () => {
+        setIsSettingsModalVisible(false);
+    };
+
+    const handleSettingsSave = (details: { name: string; members: Member[] }) => {
+        // TODO: Implementar chamadas de API para salvar o nome do chat e a lista de membros
+        console.log("Salvando alterações:", details);
+        // Ex: await updateChatDetails(activeChat.id, { name: details.name, members: details.members.map(m => m.id) });
+        setIsSettingsModalVisible(false);
+    };
 
     if (!activeChat || initialLoading) return <Loading />;
 
@@ -322,6 +351,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                         Active
                     </div>
                 </div>
+                {chatConfig?.isGroup && (
+                    <div className="chat-header-actions">
+                        <Button
+                            shape="circle"
+                            type="text"
+                            icon={<SettingOutlined />}
+                            onClick={showSettingsModal} />
+                    </div>
+                )}
             </div>
             <div
                 style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
@@ -470,6 +508,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     disabled={(!inputValue.trim() && !fileToSend) || isUploading}
                 />
             </div>
+
+            {isSettingsModalVisible && (
+                <ChatSettingsModal
+                    open={isSettingsModalVisible}
+                    onClose={handleSettingsCancel}
+                    onSave={handleSettingsSave}
+                    chat={activeChat}
+                    chatConfig={chatConfig}
+                />
+            )}
         </div>
     );
 };

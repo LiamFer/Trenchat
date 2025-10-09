@@ -1,10 +1,8 @@
 package com.liamfer.Trenchat.controller;
 
-import com.liamfer.Trenchat.dto.chat.ChatMessage;
-import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
-import com.liamfer.Trenchat.dto.chat.ChatDTO;
-import com.liamfer.Trenchat.dto.chat.MessageDTO;
+import com.liamfer.Trenchat.dto.chat.*;
 import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
+import com.liamfer.Trenchat.dto.user.UserDTO;
 import com.liamfer.Trenchat.service.ChatService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -56,6 +54,11 @@ public class ChatController {
     @GetMapping("/chat")
     public ResponseEntity<List<ChatDTO>> fetchChats(@AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.fetchUserChats(user));
+    }
+
+    @GetMapping("/chat/{chatId}")
+    public ResponseEntity<ChatConfigDTO> getChatData(@PathVariable String chatId) {
+        return ResponseEntity.ok(chatService.getChatData(chatId));
     }
 
     @GetMapping("/messages/{chatId}")

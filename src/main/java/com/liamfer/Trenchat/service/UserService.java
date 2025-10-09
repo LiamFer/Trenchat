@@ -1,7 +1,7 @@
 package com.liamfer.Trenchat.service;
 
 import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
-import com.liamfer.Trenchat.dto.user.SearchedUserDTO;
+import com.liamfer.Trenchat.dto.user.UserDTO;
 import com.liamfer.Trenchat.entity.UserEntity;
 import com.liamfer.Trenchat.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,14 +26,14 @@ public class UserService {
         this.cloudinaryService = cloudinaryService;
     }
 
-    public List<SearchedUserDTO> searchUsers(String email, UserDetails user){
+    public List<UserDTO> searchUsers(String email, UserDetails user){
         // Retorno só 10 Usuários na Pesquisa
         List<UserEntity> users = userRepository.findByEmailContainingIgnoreCase(email, PageRequest.of(0,10))
                 .getContent()
                 .stream()
                 .filter(u -> !u.getEmail().equals(user.getUsername()))
                 .toList();
-        return users.stream().map(usr -> modelMapper.map(usr, SearchedUserDTO.class)).toList();
+        return users.stream().map(usr -> modelMapper.map(usr, UserDTO.class)).toList();
     }
 
     public CloudinaryPictureResponse uploadUserPicture(MultipartFile image,UserDetails userDetails){
