@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Modal, Input, List, Avatar, Button, Select, Popconfirm, App, message, Skeleton } from 'antd';
 import debounce from 'lodash.debounce';
 import { DeleteOutlined, CrownOutlined } from '@ant-design/icons';
-import { fetchChatData, searchUsers } from '../../Service/server.service';
+import { deleteChat, fetchChatData, searchUsers } from '../../Service/server.service';
 import type { Chat } from '../../types/SocketCreatedChat';
 import useUser from '../../Hooks/useUser';
 import type { ChatConfig, ChatParticipant } from '../../types/Chat';
@@ -101,10 +101,12 @@ const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({ open, onClose, on
             okText: 'Deletar',
             okType: 'danger',
             cancelText: 'Cancelar',
-            onOk: () => {
-                // TODO: Implementar chamada de API para deletar o grupo
-                console.log("Deletando grupo:", chat.id);
-                onClose(); // Fecha o modal de configurações após a deleção
+            onOk: async () => {
+                const response = await deleteChat(chat.id);
+                if (response.success) {
+                    messageApi.success("Grupo deletado com sucesso!");
+                    onClose();
+                }
             },
         });
     };

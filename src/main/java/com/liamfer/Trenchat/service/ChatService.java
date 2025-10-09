@@ -174,6 +174,25 @@ public class ChatService {
         return this.getChatData(chatId);
     }
 
+    public void deleteChat(String chatId,UserDetails userDetails){
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        ChatEntity chat = this.findChatById(chatId);
+        ChatDTO chatDTO = modelMapper.map(chat,ChatDTO.class);
+        Set<UserEntity> members = new HashSet<>(chat.getParticipants());
+
+        if(!chat.getOwner().equals(user)){
+            throw new AccessDeniedException("Você não tem permissão para deletar este chat.");
+        }
+        chatRepository.deleteById(chatId);
+
+        for (UserEntity member : members) {
+            messagingTemplate.convertAndSend(
+                    "/topic/" + member.getId(),
+                    new SocketChatDTO("delete chat", chatDTO)
+            );
+        }
+    }
+
     public ChatConfigDTO getChatData(String chatId){
         ChatEntity chat = this.findChatById(chatId);
         return this.modelMapper.map(chat,ChatConfigDTO.class);

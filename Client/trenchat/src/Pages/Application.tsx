@@ -102,6 +102,12 @@ export default function Application() {
               }
               return currentActiveChat;
             });
+            notification.warning({
+              message: "Chat Deletado",
+              description: `O chat "${msg.chatDTO.name}" foi deletado.`,
+              placement: "topRight",
+              pauseOnHover: true,
+            });
           }
         }
       );

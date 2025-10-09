@@ -56,6 +56,12 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.OK).body(chatService.updateChat(chatId,chatUpdateDTO,user));
     }
 
+    @DeleteMapping("/chat/{chatId}")
+    public ResponseEntity<Void> deleteChat(@PathVariable String chatId, @AuthenticationPrincipal UserDetails user) {
+        chatService.deleteChat(chatId,user);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/chat")
     public ResponseEntity<List<ChatDTO>> fetchChats(@AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.fetchUserChats(user));
