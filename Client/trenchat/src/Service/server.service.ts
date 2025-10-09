@@ -113,6 +113,24 @@ export async function updateChatDetails(chatId:string,payload:object) : Promise<
   }
 }
 
+export async function markMessageAsSeen(messageId:number) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.post(`/messages/seen/${messageId}`);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
+export async function markChatMessagesAsSeen(chatId:string) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.post(`chat/${chatId}/messages/seen`);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
 export async function deleteChat(chatId:string) : Promise<APIResponse>{
   try {
     const response = await serverApi.delete(`/chat/${chatId}`);

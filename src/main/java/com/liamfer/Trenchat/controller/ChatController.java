@@ -79,6 +79,18 @@ public class ChatController {
         return ResponseEntity.ok(chatService.getChatMessages(chatId,pageable,user));
     }
 
+    @PostMapping("/messages/seen/{messageId}")
+    public ResponseEntity<Void> setMessageAsSeen(@PathVariable Long messageId, @AuthenticationPrincipal UserDetails user) {
+        chatService.setMessageAsSeen(messageId,user);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("chat/{chatId}/messages/seen")
+    public ResponseEntity<Void> setChatMessagesAsSeen(@PathVariable String chatId, @AuthenticationPrincipal UserDetails user) {
+        chatService.markAllMessagesAsSeen(chatId,user);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/chat/image", consumes = "multipart/form-data")
     public ResponseEntity<CloudinaryPictureResponse> uploadImage(@RequestPart("image") MultipartFile image,
                                                                        @AuthenticationPrincipal UserDetails user) {

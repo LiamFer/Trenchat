@@ -6,7 +6,7 @@ import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
 import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
-import { fetchChatData, fetchChatMessages, sendImage, updateChatDetails } from "../../Service/server.service";
+import { fetchChatData, fetchChatMessages, markMessageAsSeen, sendImage, updateChatDetails } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
 import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined, SmileOutlined } from "@ant-design/icons";
@@ -141,6 +141,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     time: new Date().toISOString(),
                 };
                 if (msg.sender !== user.name) {
+                    markMessageAsSeen(msg.id)
                     setMessages((prev) => [...prev, newMsg]);
                 }
             });

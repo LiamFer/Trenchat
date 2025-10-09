@@ -25,7 +25,6 @@ export default function Application() {
   const { notification } = App.useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -107,6 +106,24 @@ export default function Application() {
               description: `O chat "${msg.chatDTO.name}" foi deletado.`,
               placement: "topRight",
               pauseOnHover: true,
+            });
+          }
+          else if (msg?.action === "new message") {
+            const updatedChat = chats.find(chat => chat.id === msg.chatMessage.room);
+            if (!updatedChat) return
+
+            if (updatedChat.id !== activeChat?.id) {
+              updatedChat.unreadCount +=1
+              notification.info({
+                message: `Nova mensagem em ${msg.chatMessage.sender}`,
+                description: `Você tem ${updatedChat.unreadCount} mensagens não lidas.`,
+                placement: "topRight",
+                pauseOnHover: true,
+              });
+            }
+            setChats((prevChats) => {
+              const otherChats = prevChats.filter(chat => chat.id !== updatedChat.id);
+              return [updatedChat, ...otherChats];
             });
           }
         }
