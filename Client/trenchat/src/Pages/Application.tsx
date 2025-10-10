@@ -109,19 +109,24 @@ export default function Application() {
             });
           }
           else if (msg?.action === "new message") {
-            const updatedChat = chats.find(chat => chat.id === msg.chatMessage.room);
-            if (!updatedChat) return
-
-            if (updatedChat.id !== activeChat?.id) {
-              updatedChat.unreadCount +=1
-              notification.info({
-                message: `Nova mensagem em ${msg.chatMessage.sender}`,
-                description: `Você tem ${updatedChat.unreadCount} mensagens não lidas.`,
-                placement: "topRight",
-                pauseOnHover: true,
-              });
-            }
             setChats((prevChats) => {
+              const chatToUpdate = prevChats.find(chat => chat.id === msg.chatMessage.room);
+              if (!chatToUpdate) return prevChats;
+
+              const updatedChat = { ...chatToUpdate };
+
+              if (updatedChat.id !== activeChat?.id) {
+                updatedChat.unreadCount = (updatedChat.unreadCount || 0) + 1;
+                notification.info({
+                  message: `Nova mensagem em ${updatedChat.name}`,
+                  description: `Você tem ${updatedChat.unreadCount} mensagens não lidas.`,
+                  placement: "topRight",
+                  pauseOnHover: true,
+                });
+              } else {
+                updatedChat.unreadCount = 0;
+              }
+
               const otherChats = prevChats.filter(chat => chat.id !== updatedChat.id);
               return [updatedChat, ...otherChats];
             });
