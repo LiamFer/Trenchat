@@ -141,6 +141,21 @@ export default function Application() {
     };
   }, [user]);
 
+  useEffect(() => {
+    const totalUnread = chats.reduce(
+      (acc, chat) => acc + (chat.unreadCount || 0),
+      0
+    );
+
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) Trenchat`;
+    } else {
+      document.title = "Trenchat";
+    }
+
+    return () => { document.title = "Trenchat"; };
+  }, [chats]);
+
   return (
     <Layout className="app-layout">
       <Sidebar chats={chats} setChats={setChats} setActiveChat={setActiveChat} isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} isLoading={isLoadingChats} />
