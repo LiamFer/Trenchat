@@ -19,11 +19,16 @@ export default function Application() {
   const stompClient = useRef<Client | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
+  const activeChatRef = useRef(activeChat);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const user = useUser();
   const navigate = useNavigate();
   const { notification } = App.useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   useEffect(() => {
     if (!user) {
@@ -115,7 +120,7 @@ export default function Application() {
 
               const updatedChat = { ...chatToUpdate };
 
-              if (updatedChat.id !== activeChat?.id) {
+              if (updatedChat.id !== activeChatRef.current?.id) {
                 updatedChat.unreadCount = (updatedChat.unreadCount || 0) + 1;
                 notification.info({
                   message: `Nova mensagem em ${updatedChat.name}`,
