@@ -145,7 +145,8 @@ export async function fetchChatMessages(chatId:string,page:number) : Promise<API
     const response = await serverApi.get(`/messages/${chatId}`,{
       params: {
         page: page,
-        size:500,
+        size:50,
+        sort:"id,desc"
       }
     });
     return { success: true, data: response.data };

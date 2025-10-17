@@ -86,6 +86,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+    const shouldScrollToBottomRef = useRef(true);
     const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
     const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -101,6 +102,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const fetchOlderMessages = async () => {
         if (isLoadingMore || !hasMore) return;
 
+        shouldScrollToBottomRef.current = false; // Impede o scroll para o final
         setIsLoadingMore(true);
 
         if (messageListRef.current) {
@@ -109,8 +111,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
 
         const olderMessages = (await fetchChatMessages(activeChat.id, page)).data
 
-        setMessages((prevMessages) => [...olderMessages.content, ...prevMessages]);
-        setHasMore(olderMessages.last !== false)
+        if (olderMessages.content) {
+            setMessages((prevMessages) => [...olderMessages.content.reverse(), ...prevMessages]);
+        }
+        setHasMore(!olderMessages.last)
         setPage((prevPage) => prevPage + 1);
         setIsLoadingMore(false);
     };
@@ -118,14 +122,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     useEffect(() => {
         if (activeChat && user) {
             setIsInitialLoad(true);
+            shouldScrollToBottomRef.current = true;
             setPage(0);
 
             const initialFetch = async () => {
                 setinitialLoading(true)
                 const initialMessages = (await fetchChatMessages(activeChat.id, 0)).data;
-                setChatConfig((await fetchChatData(activeChat.id)).data);
-                setMessages(initialMessages.content);
-                setHasMore(initialMessages.last !== true);
+                if (initialMessages.content) {
+                    setMessages(initialMessages.content.reverse());
+                }
+                setHasMore(!initialMessages.last);
+                setChatConfig((await fetchChatData(activeChat.id)).data); // Movido para otimizar o carregamento visual
                 setPage(1);
                 setinitialLoading(false)
             };
@@ -142,6 +149,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 };
                 if (msg.sender !== user.name) {
                     markMessageAsSeen(msg.id)
+                    shouldScrollToBottomRef.current = true;
                     setMessages((prev) => [...prev, newMsg]);
                 }
             });
@@ -156,6 +164,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
 
     useEffect(() => {
         setMessages([]);
+        shouldScrollToBottomRef.current = true;
         setHasMore(true);
     }, [activeChat]);
 
@@ -169,13 +178,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     }, [messages, isInitialLoad]);
 
     useEffect(() => {
-        if (!isLoadingMore && messageListRef.current) {
+        if (shouldScrollToBottomRef.current && messageListRef.current) {
             const timer = setTimeout(() => {
                 scrollToBottom();
             }, 50);
             return () => clearTimeout(timer);
         }
-    }, [messages, isLoadingMore]);
+        shouldScrollToBottomRef.current = true; // Reseta para o comportamento padrão
+    }, [messages]);
 
     useLayoutEffect(() => {
         if (isLoadingMore && messageListRef.current) {
@@ -357,6 +367,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     timestamp: new Date().toISOString(),
                 };
 
+                shouldScrollToBottomRef.current = true;
                 stompClient.current.publish({
                     destination: "/app/chatroom",
                     body: JSON.stringify(payload),
@@ -387,6 +398,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 timestamp: new Date().toISOString(),
             };
 
+            shouldScrollToBottomRef.current = true;
             stompClient.current.publish({
                 destination: "/app/chatroom",
                 body: JSON.stringify(payload),
