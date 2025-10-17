@@ -9,7 +9,7 @@ import Loading from "../Loading/Loading";
 import { fetchChatData, fetchChatMessages, markMessageAsSeen, sendImage, updateChatDetails } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
-import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined, SmileOutlined } from "@ant-design/icons";
+import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined, SmileOutlined, PhoneOutlined } from "@ant-design/icons";
 import ImageUploadOverlay from "../ReactBits/ImageUploadOverlay";
 import ChatSettingsModal from "./ChatSettingsModal";
 import type { ChatConfig } from "../../types/Chat";
@@ -523,15 +523,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                         Active
                     </div>
                 </div>
-                {chatConfig?.isGroup && (
-                    <div className="chat-header-actions">
+                <div className="chat-header-actions">
+                    <Tooltip title="Iniciar chamada">
                         <Button
                             shape="circle"
                             type="text"
-                            icon={<SettingOutlined />}
-                            onClick={showSettingsModal} />
-                    </div>
-                )}
+                            icon={<PhoneOutlined style={{ fontSize: '20px' }} />}
+                            onClick={() => alert("Funcionalidade de chamada a ser implementada!")}
+                        />
+                    </Tooltip>
+                    {chatConfig?.isGroup && (
+                        <Tooltip title="Configurações do chat">
+                            <Button
+                                shape="circle"
+                                type="text"
+                                icon={<SettingOutlined style={{ fontSize: '20px' }} />}
+                                onClick={showSettingsModal}
+                            />
+                        </Tooltip>
+                    )}
+                </div>
             </div>
             <div
                 style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
