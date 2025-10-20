@@ -11,4 +11,5 @@ public class ChatDTO {
     public String id;
     public String name;
     public String picture;
+    private Long unreadCount;
 }

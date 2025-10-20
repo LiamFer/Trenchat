@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Card, Avatar, Divider, Button, theme, Tag, Skeleton, Modal } from "antd";
+import { Layout, Card, Divider, Button, theme, Tag, Skeleton, Modal, Avatar, Badge } from "antd";
 import {
   ThunderboltOutlined,
   SearchOutlined,
@@ -11,7 +11,9 @@ import useUser from "../../Hooks/useUser";
 import CreateChatModal from "./../ChatManager/CreateChatModal";
 import type { Chat } from "../../types/SocketCreatedChat";
 import ProfilePictureModal from "./ProfilePictureModal";
+import ClickableAvatar from "./ClickableAvatar";
 import { serverApi } from "../../API/server";
+import { markChatMessagesAsSeen } from "../../Service/server.service";
 
 const { Sider } = Layout;
 
@@ -36,6 +38,17 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { token } = theme.useToken();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  const switchActiveChat = (chat: Chat) => {
+    // Atualiza a lista de chats para zerar o contador de não lidos do chat selecionado
+    setChats(prevChats =>
+      prevChats.map(c =>
+        c.id === chat.id ? { ...c, unreadCount: 0 } : c
+      )
+    );
+    markChatMessagesAsSeen(chat.id);
+    setActiveChat(chat);
+  };
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -128,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               padding: token.paddingXS,
             }}
           >
-            <Avatar
+            <ClickableAvatar
               size={collapsed ? 40 : 64}
               src={user?.picture}
               style={{
@@ -243,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       width: "100%",
                       padding: collapsed ? "8px" : `${token.paddingXS}px`,
                     }}
-                    onClick={() => setActiveChat(item)}
+                    onClick={() => switchActiveChat(item)}
                     onMouseEnter={(e) =>
                     (e.currentTarget.style.backgroundColor =
                       token.colorBgContainerDisabled)
@@ -252,7 +265,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       (e.currentTarget.style.backgroundColor = "transparent")
                     }
                   >
-                    <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
+                    <Badge count={item.unreadCount ?? 0} size="small" offset={collapsed ? [-20, 8] : undefined}>
+                      <Avatar size={collapsed ? 40 : 48} src={item?.picture} />
+                    </Badge>
                     {!collapsed && (
                       <>
                         <div style={{ marginLeft: token.marginSM, flexGrow: 1 }}>

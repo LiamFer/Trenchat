@@ -1,10 +1,8 @@
 package com.liamfer.Trenchat.controller;
 
-import com.liamfer.Trenchat.dto.chat.ChatMessage;
-import com.liamfer.Trenchat.dto.chat.CreateChatDTO;
-import com.liamfer.Trenchat.dto.chat.ChatDTO;
-import com.liamfer.Trenchat.dto.chat.MessageDTO;
+import com.liamfer.Trenchat.dto.chat.*;
 import com.liamfer.Trenchat.dto.cloudinary.CloudinaryPictureResponse;
+import com.liamfer.Trenchat.dto.user.UserDTO;
 import com.liamfer.Trenchat.service.ChatService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -53,9 +51,25 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(chatService.createChat(createChatDTO,user));
     }
 
+    @PostMapping("/chat/{chatId}")
+    public ResponseEntity<ChatConfigDTO> createChat(@PathVariable String chatId,@RequestBody @Valid ChatUpdateDTO chatUpdateDTO, @AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.status(HttpStatus.OK).body(chatService.updateChat(chatId,chatUpdateDTO,user));
+    }
+
+    @DeleteMapping("/chat/{chatId}")
+    public ResponseEntity<Void> deleteChat(@PathVariable String chatId, @AuthenticationPrincipal UserDetails user) {
+        chatService.deleteChat(chatId,user);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/chat")
     public ResponseEntity<List<ChatDTO>> fetchChats(@AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.fetchUserChats(user));
+    }
+
+    @GetMapping("/chat/{chatId}")
+    public ResponseEntity<ChatConfigDTO> getChatData(@PathVariable String chatId) {
+        return ResponseEntity.ok(chatService.getChatData(chatId));
     }
 
     @GetMapping("/messages/{chatId}")
@@ -63,6 +77,18 @@ public class ChatController {
                                                               @PageableDefault(sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
                                                               @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(chatService.getChatMessages(chatId,pageable,user));
+    }
+
+    @PostMapping("/messages/seen/{messageId}")
+    public ResponseEntity<Void> setMessageAsSeen(@PathVariable Long messageId, @AuthenticationPrincipal UserDetails user) {
+        chatService.setMessageAsSeen(messageId,user);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("chat/{chatId}/messages/seen")
+    public ResponseEntity<Void> setChatMessagesAsSeen(@PathVariable String chatId, @AuthenticationPrincipal UserDetails user) {
+        chatService.markAllMessagesAsSeen(chatId,user);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/chat/image", consumes = "multipart/form-data")

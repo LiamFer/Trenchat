@@ -38,7 +38,13 @@ public class MessageEntity {
 
     private String imageUrl;
 
-//    private Set<UserEntity> seenBy = new HashSet<>();
+    @ManyToMany
+    @JoinTable(
+            name = "message_seen_by",
+            joinColumns = @JoinColumn(name = "message_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<UserEntity> seenBy = new HashSet<>();
 
     @CreatedDate
     private LocalDateTime createdAt;

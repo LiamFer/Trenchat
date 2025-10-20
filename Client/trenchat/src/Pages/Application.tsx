@@ -19,12 +19,16 @@ export default function Application() {
   const stompClient = useRef<Client | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
+  const activeChatRef = useRef(activeChat);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const user = useUser();
   const navigate = useNavigate();
   const { notification } = App.useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   useEffect(() => {
     if (!user) {
@@ -45,14 +49,91 @@ export default function Application() {
       fetchChats();
       stompClient.current = createStompClient(
         user.id,
-        (msg: SocketCreatedChat) => {
-          if (msg?.action == "new chat") {
-            setChats((prevChats) => [...prevChats, msg.chatDTO])
+        (msg) => {
+          if (msg?.action === "new chat") {
+            setChats((prevChats) => [msg.chatDTO, ...prevChats])
             notification.info({
               message: "New Chat Created",
               description: `${msg.chatDTO.name} wants to Talk to you!`,
               placement: "topRight",
               pauseOnHover: true,
+            });
+          }
+          else if (msg?.action === "chat updated") {
+            const updatedChat = msg.chatDTO;
+            setChats((prevChats) =>
+              prevChats.map((chat) =>
+                chat.id === updatedChat.id ? updatedChat : chat
+              )
+            );
+            setActiveChat((currentActiveChat) =>
+              currentActiveChat?.id === updatedChat.id ? updatedChat : currentActiveChat
+            );
+          }
+          else if (msg?.action === "added to chat") {
+            setChats((prevChats) => [msg.chatDTO, ...prevChats])
+            notification.info({
+              message: "You've been added to a chat!",
+              description: `You've been added to ${msg.chatDTO.name}!`,
+              placement: "topRight",
+              pauseOnHover: true,
+            });
+          }
+          else if (msg?.action === "removed from chat") {
+            const chatIdToDelete = msg.chatDTO.id;
+            setChats(prevChats => prevChats.filter(chat => chat.id !== chatIdToDelete));
+            setActiveChat(currentActiveChat => {
+              if (currentActiveChat?.id === chatIdToDelete) {
+                navigate('/');
+                return null;
+              }
+              return currentActiveChat;
+            });
+            notification.warning({
+              message: "You've been removed from the chat!",
+              description: `You've been removed from ${msg.chatDTO.name}!`,
+              placement: "topRight",
+              pauseOnHover: true,
+            });
+          }
+          else if (msg?.action === "delete chat") {
+            const chatIdToDelete = msg.chatDTO.id;
+            setChats(prevChats => prevChats.filter(chat => chat.id !== chatIdToDelete));
+            setActiveChat(currentActiveChat => {
+              if (currentActiveChat?.id === chatIdToDelete) {
+                navigate('/');
+                return null;
+              }
+              return currentActiveChat;
+            });
+            notification.warning({
+              message: "Chat Deletado",
+              description: `O chat "${msg.chatDTO.name}" foi deletado.`,
+              placement: "topRight",
+              pauseOnHover: true,
+            });
+          }
+          else if (msg?.action === "new message") {
+            setChats((prevChats) => {
+              const chatToUpdate = prevChats.find(chat => chat.id === msg.chatMessage.room);
+              if (!chatToUpdate) return prevChats;
+
+              const updatedChat = { ...chatToUpdate };
+
+              if (updatedChat.id !== activeChatRef.current?.id) {
+                updatedChat.unreadCount = (updatedChat.unreadCount || 0) + 1;
+                notification.info({
+                  message: `Nova mensagem em ${updatedChat.name}`,
+                  description: `Você tem ${updatedChat.unreadCount} mensagens não lidas.`,
+                  placement: "topRight",
+                  pauseOnHover: true,
+                });
+              } else {
+                updatedChat.unreadCount = 0;
+              }
+
+              const otherChats = prevChats.filter(chat => chat.id !== updatedChat.id);
+              return [updatedChat, ...otherChats];
             });
           }
         }
@@ -64,6 +145,21 @@ export default function Application() {
       }
     };
   }, [user]);
+
+  useEffect(() => {
+    const totalUnread = chats.reduce(
+      (acc, chat) => acc + (chat.unreadCount || 0),
+      0
+    );
+
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) Trenchat`;
+    } else {
+      document.title = "Trenchat";
+    }
+
+    return () => { document.title = "Trenchat"; };
+  }, [chats]);
 
   return (
     <Layout className="app-layout">
