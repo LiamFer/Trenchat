@@ -1,16 +1,20 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Input, Avatar, theme, Modal, Button, Spin, Image } from "antd";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Input, theme, Button, Spin, Image, Popover, Tooltip } from "antd";
 import "../../Styles/ChatWindow.css";
 import { Client } from "@stomp/stompjs";
 import useUser from "../../Hooks/useUser";
 import { createStompClient } from "../../API/socket";
 import type { Chat } from "../../types/SocketCreatedChat";
 import Loading from "../Loading/Loading";
-import { fetchChatMessages, sendImage } from "../../Service/server.service";
+import { fetchChatData, fetchChatMessages, markMessageAsSeen, sendImage, updateChatDetails } from "../../Service/server.service";
 import GradualBlur from "../ReactBits/GradualBlur/GradualBlur";
 import AnimatedContent from "../ReactBits/AnimatedContent/AnimatedContent";
-import { PaperClipOutlined, SendOutlined, CloseOutlined } from "@ant-design/icons";
+import { PaperClipOutlined, SendOutlined, CloseOutlined, SettingOutlined, SmileOutlined, PhoneOutlined } from "@ant-design/icons";
 import ImageUploadOverlay from "../ReactBits/ImageUploadOverlay";
+import ChatSettingsModal from "./ChatSettingsModal";
+import type { ChatConfig } from "../../types/Chat";
+import ClickableAvatar from "./ClickableAvatar";
+import emojiData from '@emoji-mart/data';
 
 interface Message {
     type: "sent" | "received";
@@ -21,13 +25,49 @@ interface Message {
     time: string;
 }
 
+interface Member {
+    id: string;
+    name: string;
+    picture: string;
+}
+
 interface ChatWindowProps {
     activeChat: Chat | null;
 }
 
+// Estrutura para armazenar emojis com dados para busca
+interface EmojiInfo {
+    char: string;
+    keywords: string[];
+}
+
+// Mapeamento de categorias para os ícones que você quer usar
+const categoryIconMap: Record<string, string> = {
+    people: '😊',
+    nature: '🐶',
+    foods: '🍕',
+    activity: '⚽',
+    places: '✈️',
+    objects: '💡',
+    symbols: '❤️',
+    flags: '🚩',
+};
+
+const EMOJI_CATEGORIES = [
+    { id: 'people', name: 'Smileys & People' },
+    { id: 'nature', name: 'Animals & Nature' },
+    { id: 'foods', name: 'Food & Drink' },
+    { id: 'activity', name: 'Activity' },
+    { id: 'places', name: 'Travel & Places' },
+    { id: 'objects', name: 'Objects' },
+    { id: 'symbols', name: 'Symbols' },
+    { id: 'flags', name: 'Flags' },
+];
+
 const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const { token } = theme.useToken();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [chatConfig, setChatConfig] = useState<ChatConfig | null>(null);
     const [inputValue, setInputValue] = useState<string>("");
     const stompClient = useRef<Client | null>(null);
     const user = useUser();
@@ -45,6 +85,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const [fileToSend, setFileToSend] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const shouldScrollToBottomRef = useRef(true);
+    const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+    const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
+    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+    const [emojiSearchTerm, setEmojiSearchTerm] = useState('');
     const dragCounter = useRef(0);
 
     const scrollToBottom = () => {
@@ -53,10 +99,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         }
     };
 
-
     const fetchOlderMessages = async () => {
         if (isLoadingMore || !hasMore) return;
 
+        shouldScrollToBottomRef.current = false; // Impede o scroll para o final
         setIsLoadingMore(true);
 
         if (messageListRef.current) {
@@ -65,8 +111,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
 
         const olderMessages = (await fetchChatMessages(activeChat.id, page)).data
 
-        setMessages((prevMessages) => [...olderMessages.content, ...prevMessages]);
-        setHasMore(olderMessages.last !== false)
+        if (olderMessages.content) {
+            setMessages((prevMessages) => [...olderMessages.content.reverse(), ...prevMessages]);
+        }
+        setHasMore(!olderMessages.last)
         setPage((prevPage) => prevPage + 1);
         setIsLoadingMore(false);
     };
@@ -74,13 +122,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     useEffect(() => {
         if (activeChat && user) {
             setIsInitialLoad(true);
+            shouldScrollToBottomRef.current = true;
             setPage(0);
 
             const initialFetch = async () => {
                 setinitialLoading(true)
                 const initialMessages = (await fetchChatMessages(activeChat.id, 0)).data;
-                setMessages(initialMessages.content);
-                setHasMore(initialMessages.last !== true);
+                if (initialMessages.content) {
+                    setMessages(initialMessages.content.reverse());
+                }
+                setHasMore(!initialMessages.last);
+                setChatConfig((await fetchChatData(activeChat.id)).data); // Movido para otimizar o carregamento visual
                 setPage(1);
                 setinitialLoading(false)
             };
@@ -96,6 +148,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     time: new Date().toISOString(),
                 };
                 if (msg.sender !== user.name) {
+                    markMessageAsSeen(msg.id)
+                    shouldScrollToBottomRef.current = true;
                     setMessages((prev) => [...prev, newMsg]);
                 }
             });
@@ -110,6 +164,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
 
     useEffect(() => {
         setMessages([]);
+        shouldScrollToBottomRef.current = true;
         setHasMore(true);
     }, [activeChat]);
 
@@ -123,16 +178,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     }, [messages, isInitialLoad]);
 
     useEffect(() => {
-        // Rola para o final quando novas mensagens chegam ou no carregamento inicial.
-        // O timeout de 50ms garante que a animação da nova mensagem tenha tempo de ser
-        // processada antes que o scroll aconteça, evitando que a mensagem fique invisível.
-        if (!isLoadingMore && messageListRef.current) {
+        if (shouldScrollToBottomRef.current && messageListRef.current) {
             const timer = setTimeout(() => {
                 scrollToBottom();
-            }, 50); // Um debounce um pouco maior para garantir a estabilidade.
+            }, 50);
             return () => clearTimeout(timer);
         }
-    }, [messages, isLoadingMore]);
+        shouldScrollToBottomRef.current = true; // Reseta para o comportamento padrão
+    }, [messages]);
 
     useLayoutEffect(() => {
         if (isLoadingMore && messageListRef.current) {
@@ -154,22 +207,150 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
     const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
         const items = e.clipboardData.items;
         for (let i = 0; i < items.length; i++) {
-            // Verifica se o item colado é uma imagem
             if (items[i].type.indexOf('image') !== -1) {
                 const file = items[i].getAsFile();
                 if (file) {
                     handleImageSelected(file);
-                    e.preventDefault(); // Impede que o texto da imagem (se houver) seja colado
-                    break; // Para após encontrar a primeira imagem
+                    e.preventDefault();
+                    break;
                 }
             }
         }
     };
 
+    const handleEmojiClick = (emoji: string) => {
+        setInputValue((prev) => prev + emoji);
+    };
+
+    // Memoiza a criação do índice de busca para performance
+    const emojiSearchIndex = useMemo(() => {
+        const index: EmojiInfo[] = [];
+        for (const emojiId in emojiData.emojis) {
+            const emoji = emojiData.emojis[emojiId];
+            index.push({
+                char: emoji.skins[0].native,
+                keywords: [emoji.id, emoji.name, ...emoji.keywords],
+            });
+        }
+        return index;
+    }, []);
+
+    const filteredEmojis = useMemo(() => {
+        if (emojiSearchTerm) {
+            const lowerCaseSearch = emojiSearchTerm.toLowerCase();
+            return emojiSearchIndex
+                .filter(emoji => emoji.keywords.some(kw => kw.includes(lowerCaseSearch)))
+                .map(emoji => emoji.char);
+        }
+        // Se não há busca, mostra emojis da categoria selecionada
+        const categoryId = EMOJI_CATEGORIES[activeEmojiCategory].id;
+        const emojiIds = emojiData.categories.find(c => c.id === categoryId)?.emojis || [];
+        return emojiIds.map(id => emojiData.emojis[id].skins[0].native);
+    }, [emojiSearchTerm, activeEmojiCategory, emojiSearchIndex]);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmojiSearchTerm(e.target.value);
+    };
+
+    const emojiPickerContent = (
+        <div
+            style={{
+                width: '300px',
+                backgroundColor: token.colorBgContainer,
+                borderRadius: '8px',
+                overflow: 'hidden',
+            }}
+        >
+            <Input
+                placeholder="Buscar emoji..."
+                value={emojiSearchTerm}
+                onChange={handleSearchChange}
+                style={{ margin: '8px', width: 'calc(100% - 16px)' }}
+                allowClear
+            />
+            <div
+                style={{
+                    display: 'flex',
+                    gap: '4px',
+                    padding: '8px',
+                    borderBottom: `1px solid ${token.colorBorder}`,
+                    overflowX: 'auto',
+                }}
+            >
+                {!emojiSearchTerm && EMOJI_CATEGORIES.map((cat, idx) => (
+                    <Tooltip title={cat.name} key={cat.id}>
+                        <button
+                            onClick={() => setActiveEmojiCategory(idx)}
+                            style={{
+                                background: activeEmojiCategory === idx ? token.colorPrimary : 'transparent',
+                                color: activeEmojiCategory === idx ? '#fff' : token.colorText,
+                                border: 'none',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s',
+                            }}
+                        >
+                            {categoryIconMap[cat.id]}
+                        </button>
+                    </Tooltip>
+                ))}
+            </div>
+
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(6, 1fr)',
+                    alignContent: 'flex-start',
+                    gap: '4px',
+                    padding: '0 8px 8px 8px',
+                    height: '250px',
+                    overflowY: 'auto',
+                }}
+            >
+                {filteredEmojis.length > 0 ? (
+                    filteredEmojis.map((emoji, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => handleEmojiClick(emoji)}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                transition: 'background-color 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = token.colorBgElevated}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            {emoji}
+                        </button>
+                    ))
+                ) : (
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        textAlign: 'center',
+                        color: token.colorTextSecondary,
+                        paddingTop: '24px',
+                        userSelect: 'none'
+                    }}>
+                        Nenhum emoji encontrado
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
     const onSend = async (value: string) => {
         if (!stompClient.current || !user) return;
 
-        // Lógica para enviar imagem
         if (fileToSend && previewImage) {
             setIsUploading(true);
             const response = await sendImage(fileToSend);
@@ -186,6 +367,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     timestamp: new Date().toISOString(),
                 };
 
+                shouldScrollToBottomRef.current = true;
                 stompClient.current.publish({
                     destination: "/app/chatroom",
                     body: JSON.stringify(payload),
@@ -201,14 +383,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 };
                 setMessages((prev) => [...prev, sentMessage]);
             }
-            // Limpa o preview
             setPreviewImage(null);
             setFileToSend(null);
             setInputValue("");
             return;
         }
 
-        // Lógica para enviar texto
         if (value.trim().length > 0) {
             const payload = {
                 room: activeChat.id,
@@ -218,6 +398,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                 timestamp: new Date().toISOString(),
             };
 
+            shouldScrollToBottomRef.current = true;
             stompClient.current.publish({
                 destination: "/app/chatroom",
                 body: JSON.stringify(payload),
@@ -287,6 +468,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
         }
     };
 
+    const showSettingsModal = () => {
+        setIsSettingsModalVisible(true);
+    };
+
+    const handleSettingsCancel = () => {
+        setIsSettingsModalVisible(false);
+    };
+
+    const handleSettingsSave = async (payload: { name: string; membersAdded: string[]; membersRemoved: string[] }): Promise<void> => {
+        try {
+            const response = await updateChatDetails(activeChat?.id, payload);
+            if (response?.success) {
+                setChatConfig(response.data as ChatConfig);
+                setIsSettingsModalVisible(false);
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar o chat:", error);
+            throw error;
+        }
+    };
 
     if (!activeChat || initialLoading) return <Loading />;
 
@@ -296,7 +497,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
             style={{ backgroundColor: token.colorBgLayout }}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
-            onDragOver={(e) => e.preventDefault()} // Necessário para o onDrop funcionar
+            onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
         >
             <ImageUploadOverlay visible={isDragging} />
@@ -307,7 +508,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     borderBottom: `1px solid ${token.colorBorder}`,
                 }}
             >
-                <Avatar src={activeChat?.picture} size={48} />
+                <ClickableAvatar src={activeChat?.picture} size={48} />
                 <div className="chat-header-info">
                     <div
                         className="chat-header-name"
@@ -321,6 +522,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     >
                         Active
                     </div>
+                </div>
+                <div className="chat-header-actions">
+                    <Tooltip title="Iniciar chamada">
+                        <Button
+                            shape="circle"
+                            type="text"
+                            icon={<PhoneOutlined style={{ fontSize: '20px' }} />}
+                            onClick={() => alert("Funcionalidade de chamada a ser implementada!")}
+                        />
+                    </Tooltip>
+                    {chatConfig?.isGroup && (
+                        <Tooltip title="Configurações do chat">
+                            <Button
+                                shape="circle"
+                                type="text"
+                                icon={<SettingOutlined style={{ fontSize: '20px' }} />}
+                                onClick={showSettingsModal}
+                            />
+                        </Tooltip>
+                    )}
                 </div>
             </div>
             <div
@@ -341,7 +562,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     {messages.map((message, index) => (
                         <AnimatedContent
                             key={index}
-                            scroller={messageListRef.current} // Keep this to specify the scroll container
+                            scroller={messageListRef.current}
                             distance={50}
                             direction="vertical"
                             duration={0.5}
@@ -353,7 +574,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                         >
                             <div className={`message-row ${message.type}`}>
                                 {message.type === "received" && (
-                                    <Avatar src={message.picture} className="message-avatar" />
+                                    <ClickableAvatar src={message.picture} className="message-avatar" />
                                 )}
                                 <div
                                     className={`message-bubble ${message.type}`}
@@ -370,7 +591,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                             src={message.imageUrl}
                                             alt="imagem enviada"
                                             style={{ maxWidth: '250px', borderRadius: '8px' }}
-                                            onLoad={scrollToBottom} // Garante o scroll após a imagem carregar
+                                            onLoad={scrollToBottom}
                                         />
                                             <p>{message.text}</p></div>
                                     ) : (
@@ -384,7 +605,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                                     </span>
                                 </div>
                                 {message.type === "sent" && (
-                                    <Avatar src={user?.picture} className="message-avatar" />
+                                    <ClickableAvatar src={user?.picture} className="message-avatar" />
                                 )}
                             </div>
                         </AnimatedContent>
@@ -445,6 +666,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     shape="circle"
                     onClick={() => fileInputRef.current?.click()}
                 />
+                <Popover
+                    content={emojiPickerContent}
+                    trigger="click"
+                    placement="topLeft"
+                    open={isEmojiPickerOpen}
+                    onOpenChange={setIsEmojiPickerOpen}
+                >
+                    <Button aria-label="Selecionar emoji" icon={<SmileOutlined />} type="text" shape="circle" />
+                </Popover>
                 <Input.TextArea
                     placeholder="Digite sua mensagem..."
                     value={inputValue}
@@ -470,6 +700,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ activeChat }) => {
                     disabled={(!inputValue.trim() && !fileToSend) || isUploading}
                 />
             </div>
+
+            {isSettingsModalVisible && (
+                <ChatSettingsModal
+                    open={isSettingsModalVisible}
+                    onClose={handleSettingsCancel}
+                    onSave={handleSettingsSave}
+                    chat={activeChat}
+                />
+            )}
         </div>
     );
 };

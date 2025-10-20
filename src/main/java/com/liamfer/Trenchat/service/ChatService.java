@@ -10,19 +10,18 @@ import com.liamfer.Trenchat.repository.ChatRepository;
 import com.liamfer.Trenchat.repository.MessageRepository;
 import com.liamfer.Trenchat.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.UUID;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +48,7 @@ public class ChatService {
     public ChatDTO createChat(CreateChatDTO createChatDTO, UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
         ChatEntity chat = new ChatEntity();
+        chat.setOwner(user);
 
         if (!createChatDTO.isGroup()){
             checkIfChatCanBeCreated(user,createChatDTO);
@@ -73,7 +73,7 @@ public class ChatService {
             ChatDTO dtoForOther = modelMapper.map(chatDTO, ChatDTO.class);
             dtoForOther.setName(createChatDTO.isGroup() ? createChatDTO.name() : user.getName());
             dtoForOther.setPicture(createChatDTO.isGroup() ? groupPicture : user.getPicture());
-            messagingTemplate.convertAndSend("/topic/" + id, new SocketCreatedChatDTO("new chat", dtoForOther));
+            messagingTemplate.convertAndSend("/topic/" + id, new SocketChatDTO("new chat", dtoForOther));
         });
 
         if(createChatDTO.isGroup()){
@@ -91,27 +91,82 @@ public class ChatService {
         return chatDTO;
     }
 
-    public void sendMessage(ChatMessage message,String email){
+    @Transactional
+    public void sendMessage(ChatMessage message, String email) {
         UserEntity user = findUserByEmail(email);
         ChatEntity chat = findChatById(message.room());
-        messageRepository.save(new MessageEntity(chat,user,message.content(),message.imageUrl()));
-        messagingTemplate.convertAndSend("/topic/" + message.room(), message);
+        MessageEntity msg = new MessageEntity(chat, user, message.content(), message.imageUrl());
+        msg.getSeenBy().add(user);
+
+        MessageEntity savedMessage = messageRepository.save(msg);
+        ChatMessage messageToSend = new ChatMessage(
+                savedMessage.getId(),
+                message.room(),
+                message.sender(),
+                message.content(),
+                message.imageUrl(),
+                message.picture()
+        );
+
+        for (UserEntity participant : chat.getParticipants().stream()
+                .filter(p -> !Objects.equals(p.getId(), user.getId()))
+                .toList()) {
+            messagingTemplate.convertAndSend(
+                    "/topic/" + participant.getId(),
+                    new SocketMessageNotificationDTO("new message", messageToSend)
+            );
+        }
+
+        messagingTemplate.convertAndSend("/topic/" + message.room(), messageToSend);
     }
+
+    public void setMessageAsSeen(Long id,UserDetails userDetails){
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        MessageEntity message = this.findMessageById(id);
+        message.getSeenBy().add(user);
+        messageRepository.save(message);
+    }
+
+    @Transactional
+    public void markAllMessagesAsSeen(String chatId, UserDetails userDetails) {
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        ChatEntity chat = findChatById(chatId);
+
+        List<MessageEntity> unreadMessages = chat.getMessages().stream()
+                .filter(msg -> !msg.getSeenBy().contains(user))
+                .toList();
+
+        for (MessageEntity message : unreadMessages) {
+            message.getSeenBy().add(user);
+        }
+
+        messageRepository.saveAll(unreadMessages);
+    }
+
 
     public List<ChatDTO> fetchUserChats(UserDetails userDetails) {
         UserEntity user = findUserByEmail(userDetails.getUsername());
-        return chatRepository.findAllByParticipantsId(user.getId()).stream().map(chat -> {
-            ChatDTO chatDTO = modelMapper.map(chat, ChatDTO.class);
 
-            if(chat.getIsGroup()){
+        List<Object[]> results = chatRepository.findChatsWithUnreadCountAndLastMessageTime(user.getId(), user);
+
+        return results.stream().map(result -> {
+            ChatEntity chat = (ChatEntity) result[0];
+            Long unreadCount = ((Number) result[1]).longValue();
+
+            ChatDTO chatDTO = modelMapper.map(chat, ChatDTO.class);
+            chatDTO.setUnreadCount(unreadCount);
+
+            // se for grupo
+            if (chat.getIsGroup()) {
                 chatDTO.setName(chat.getName());
                 chatDTO.setPicture(groupPicture);
-                return chatDTO;
+            } else {
+                UserEntity other = chat.getParticipants().stream()
+                        .filter(p -> !p.getId().equals(user.getId()))
+                        .findFirst().orElseThrow();
+                chatDTO.setName(other.getName());
+                chatDTO.setPicture(other.getPicture());
             }
-
-            UserEntity other = chat.getParticipants().stream().filter(p -> p.getId()!=user.getId()).findFirst().orElseThrow();
-            chatDTO.setName(other.getName());
-            chatDTO.setPicture(other.getPicture());
             return chatDTO;
         }).toList();
     }
@@ -121,6 +176,77 @@ public class ChatService {
             String type = message.getSender().getEmail().equals(userDetails.getUsername()) ? "sent" : "received";
             return new MessageDTO(type, message.getContent(),message.getImageUrl(), message.getSender().getName(), message.getSender().getPicture(), message.getCreatedAt().toString());
         });
+    }
+
+    public ChatConfigDTO updateChat(String chatId,ChatUpdateDTO chatUpdate,UserDetails userDetails){
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        ChatEntity chat = this.findChatById(chatId);
+
+        if(!chat.getOwner().equals(user)){
+            throw new AccessDeniedException("Você não tem permissão para atualizar este chat.");
+        }
+
+        chat.setName(chatUpdate.getName());
+        ChatDTO chatDTO = modelMapper.map(chat,ChatDTO.class);
+        chatDTO.setPicture(groupPicture);
+        for (UserEntity member : chat.getParticipants()) {
+            messagingTemplate.convertAndSend(
+                    "/topic/" + member.getId(),
+                    new SocketChatDTO("chat updated", chatDTO)
+            );
+        }
+
+        if(!chatUpdate.getMembersAdded().isEmpty()){
+            Set<UserEntity> updated = new HashSet<>(chat.getParticipants());
+            Set<UserEntity> usersToAdd = chatUpdate.getMembersAdded().stream().map(this::findUserByEmail).collect(Collectors.toSet());
+            updated.addAll(usersToAdd);
+            chat.setParticipants(updated);
+
+            for(UserEntity newMember : usersToAdd){
+                messagingTemplate.convertAndSend("/topic/" + newMember.getId(), new SocketChatDTO("added to chat", chatDTO));
+            }
+        }
+        if (!chatUpdate.getMembersRemoved().isEmpty()) {
+            Set<UserEntity> updated = new HashSet<>(chat.getParticipants());
+            Set<UserEntity> usersToRemove = chatUpdate.getMembersRemoved().stream()
+                    .map(this::findUserByEmail)
+                    .collect(Collectors.toSet());
+            updated.removeAll(usersToRemove);
+            chat.setParticipants(updated);
+            for (UserEntity removedMember : usersToRemove) {
+                messagingTemplate.convertAndSend(
+                        "/topic/" + removedMember.getId(),
+                        new SocketChatDTO("removed from chat", chatDTO)
+                );
+            }
+        }
+
+        chatRepository.save(chat);
+        return this.getChatData(chatId);
+    }
+
+    public void deleteChat(String chatId,UserDetails userDetails){
+        UserEntity user = findUserByEmail(userDetails.getUsername());
+        ChatEntity chat = this.findChatById(chatId);
+        ChatDTO chatDTO = modelMapper.map(chat,ChatDTO.class);
+        Set<UserEntity> members = new HashSet<>(chat.getParticipants());
+
+        if(!chat.getOwner().equals(user)){
+            throw new AccessDeniedException("Você não tem permissão para deletar este chat.");
+        }
+        chatRepository.deleteById(chatId);
+
+        for (UserEntity member : members) {
+            messagingTemplate.convertAndSend(
+                    "/topic/" + member.getId(),
+                    new SocketChatDTO("delete chat", chatDTO)
+            );
+        }
+    }
+
+    public ChatConfigDTO getChatData(String chatId){
+        ChatEntity chat = this.findChatById(chatId);
+        return this.modelMapper.map(chat,ChatConfigDTO.class);
     }
 
     public List<String> getParticipantsIds(List<String> participantsEmails) {
@@ -156,6 +282,14 @@ public class ChatService {
             return user.get();
         }
         throw new EntityNotFoundException("Usuário não Encontrado");
+    }
+
+    private MessageEntity findMessageById(Long id) {
+        Optional<MessageEntity> message = messageRepository.findById(id);
+        if (message.isPresent()) {
+            return message.get();
+        }
+        throw new EntityNotFoundException("Mensagem não Encontrada");
     }
 
     private ChatEntity findChatById(String id) {

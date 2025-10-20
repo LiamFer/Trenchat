@@ -14,6 +14,7 @@
 
 .chat-header-info {
   margin-left: 16px;
+  flex-grow: 1; /* Faz este elemento ocupar o espaço disponível */
 }
 
 .chat-header-name {
@@ -23,6 +24,10 @@
 
 .chat-header-status {
   color: #1890ff;
+}
+
+.chat-header-actions {
+  margin-left: auto; /* Empurra o elemento para a direita */
 }
 
 .messages-list {

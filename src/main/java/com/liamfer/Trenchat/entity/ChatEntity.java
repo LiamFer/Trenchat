@@ -28,6 +28,7 @@ public class ChatEntity {
 
     private String name;
     private Boolean isGroup = false;
+    private UserEntity owner;
 
     @ManyToMany
     @JoinTable(

@@ -95,12 +95,58 @@ export async function fetchUserChats() : Promise<APIResponse>{
   }
 }
 
+export async function fetchChatData(chatId:string) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.get(`/chat/${chatId}`);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
+export async function updateChatDetails(chatId:string,payload:object) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.post(`/chat/${chatId}`,payload);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
+export async function markMessageAsSeen(messageId:number) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.post(`/messages/seen/${messageId}`);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
+export async function markChatMessagesAsSeen(chatId:string) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.post(`chat/${chatId}/messages/seen`);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
+export async function deleteChat(chatId:string) : Promise<APIResponse>{
+  try {
+    const response = await serverApi.delete(`/chat/${chatId}`);
+    return { success: true, data: response.data };
+  } catch (error: any) {
+    return defaultFallback(error);
+  }
+}
+
 export async function fetchChatMessages(chatId:string,page:number) : Promise<APIResponse>{
   try {
     const response = await serverApi.get(`/messages/${chatId}`,{
       params: {
         page: page,
-        size:500,
+        size:50,
+        sort:"id,desc"
       }
     });
     return { success: true, data: response.data };
