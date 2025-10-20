@@ -60,7 +60,7 @@ O **Trenchat** é uma aplicação de chat em tempo real desenvolvida com **Sprin
 ## 🗄️ Schema do Banco de Dados
 
 <p align="center">
-   <img src="https://raw.githubusercontent.com/LiamFer/Trenchat/main/assets/schema.png" alt="Schema do Banco de Dados do Trenchat" width="800"/>
+   <img src="Schema.png" alt="Schema do Banco de Dados do Trenchat" width="800"/>
 </p>
 
 
